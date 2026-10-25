@@ -10,24 +10,25 @@
 
 ## 2. Local import and metadata
 
-- [ ] 2.1 Implement folder and file picking through SAF (`OpenDocumentTree`, `OpenDocument`); verify with an instrumented test on a fixture: a picked folder with 3 mp3 files creates one book with 3 chapters
-- [ ] 2.2 Implement copying into `filesDir/books/<bookId>` through `.part` and writing `book.json`; verify with a unit test of manifest serialization and manually that a cancelled copy leaves no `.part`
-- [ ] 2.3 Implement metadata and cover extraction (`MediaMetadataRetriever`) with a fallback to the folder name; verify with unit tests on three fixtures: full tags, partial tags, no tags
-- [ ] 2.4 Run the m4b chapter spike and implement the cascade `MediaMetadata.chapters` → `chpl` → chapter track → single chapter; verify with the `docs/spikes/m4b-chapters.md` report and unit tests on extracted boundaries
-- [ ] 2.5 Implement nested folder traversal and chapter ordering by path; verify with a unit test: `part-1/02.mp3`, `part-1/01.mp3`, `part-2/01.mp3` become chapters 1, 2, 3
-- [ ] 2.6 Build the import screen with copy progress and errors; verify with an instrumented test: importing a folder shows progress and finishes by opening the book screen
+- [x] 2.1 Implement folder and file picking through SAF (`OpenDocumentTree`, `OpenDocument`); verify with an instrumented test on a fixture: a picked folder with 3 mp3 files creates one book with 3 chapters
+- [x] 2.2 Implement copying into `filesDir/books/<bookId>` through `.part` and writing `book.json`; verify with a unit test of manifest serialization and manually that a cancelled copy leaves no `.part`
+- [x] 2.3 Implement metadata and cover extraction (`MediaMetadataRetriever`) with a fallback to the folder name; verify with unit tests on three fixtures: full tags, partial tags, no tags
+- [x] 2.4 Run the m4b chapter spike and implement the cascade `MediaMetadata.chapters` → `chpl` → chapter track → single chapter; verify with the `docs/spikes/m4b-chapters.md` report and unit tests on extracted boundaries
+- [x] 2.5 Implement nested folder traversal and chapter ordering by path; verify with a unit test: `part-1/02.mp3`, `part-1/01.mp3`, `part-2/01.mp3` become chapters 1, 2, 3
+- [x] 2.6 Build the import screen with copy progress and errors; verify with an instrumented test: importing a folder shows progress and finishes by opening the book screen
+- [x] 2.7 Strip speech-synthesis markup (stress `+`, `[break]`, `[pause]`, `[voice:…]`) from chapter titles and text tags on import; verify with unit tests on titles taken from real ebook2audiobook books, a markup-only title and lookalike text (`C++`, `[Часть 1]`)
 
 ## 3. Player
 
-- [ ] 3.1 Wire ExoPlayer inside `MediaSessionService` and publish a notification with the cover and chapter; verify manually: playback continues with the app in the background and the screen locked
-- [ ] 3.2 Implement chapter queue building (separate `MediaItem`s for mp3, `ClippingConfiguration` for m4b); verify with an instrumented test: when chapter 1 ends, chapter 2 starts automatically in both formats
-- [ ] 3.3 Build the player screen with pause, ±15 s seek, chapter navigation and progress dragging; verify with a UI test: tapping "back 15" moves the position by 15 s
-- [ ] 3.4 Implement speed change in the 0.5–3.0× range with persistence in settings; verify with a unit test of persistence and manually that the speed is the same after a restart
-- [ ] 3.5 Implement the sleep timer (5/10/15/30/45/60 minutes and "until end of chapter"); verify with an instrumented test using a fake clock: when it expires, playback is paused
-- [ ] 3.6 Implement position autosave every 5 seconds, on pause, on going to the background and at chapter end; verify with a unit test: after a process `kill` the position differs by no more than 5 seconds
-- [ ] 3.7 Add the "Continue listening" card to the home screen; verify with a UI test: the card shows the last book and opens the player at the saved position
-- [ ] 3.8 Implement bookmarks: creation at the current position, list, jump, deletion; verify with a DAO test and a UI test of jumping to a bookmark
-- [ ] 3.9 Implement the `POST_NOTIFICATIONS` request before the first background playback; verify the denial scenario manually: playback works, no notification, no crash
+- [x] 3.1 Wire ExoPlayer inside `MediaSessionService` and publish a notification with the cover and chapter; verify manually: playback continues with the app in the background and the screen locked
+- [x] 3.2 Implement chapter queue building (separate `MediaItem`s for mp3, `ClippingConfiguration` for m4b); verify with an instrumented test: when chapter 1 ends, chapter 2 starts automatically in both formats
+- [x] 3.3 Build the player screen with pause, ±15 s seek, chapter navigation and progress dragging; verify with a UI test: tapping "back 15" moves the position by 15 s
+- [x] 3.4 Implement speed change in the 0.5–3.0× range with persistence in settings; verify with a unit test of persistence and manually that the speed is the same after a restart
+- [x] 3.5 Implement the sleep timer (5/10/15/30/45/60 minutes and "until end of chapter"); verify with an instrumented test using a fake clock: when it expires, playback is paused
+- [x] 3.6 Implement position autosave every 5 seconds, on pause, on going to the background and at chapter end; verify with a unit test: after a process `kill` the position differs by no more than 5 seconds
+- [x] 3.7 Add the "Continue listening" card to the home screen; verify with a UI test: the card shows the last book and opens the player at the saved position
+- [x] 3.8 Implement bookmarks: creation at the current position, list, jump, deletion; verify with a DAO test and a UI test of jumping to a bookmark
+- [x] 3.9 Implement the `POST_NOTIFICATIONS` request before the first background playback; verify the denial scenario manually: playback works, no notification, no crash
 
 ## 4. Library
 

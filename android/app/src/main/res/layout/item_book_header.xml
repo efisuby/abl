@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/cover"
+        android:layout_width="@dimen/book_cover_size"
+        android:layout_height="@dimen/book_cover_size"
+        android:layout_gravity="center_horizontal"
+        android:background="?attr/colorSurfaceVariant"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textAppearance="?attr/textAppearanceHeadlineSmall" />
+
+    <TextView
+        android:id="@+id/author"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+    <TextView
+        android:id="@+id/narrator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+    <TextView
+        android:id="@+id/summary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+    <Button
+        android:id="@+id/listen"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/book_listen"
+        app:icon="@drawable/ic_play" />
+
+</LinearLayout>

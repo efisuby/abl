@@ -40,8 +40,8 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     }
 
     suspend fun setPlaybackSpeed(speed: Float) {
-        val clamped = speed.coerceIn(AppSettings.MIN_SPEED, AppSettings.MAX_SPEED)
-        dataStore.edit { it[PLAYBACK_SPEED] = clamped }
+        val normalized = AppSettings.normalizeSpeed(speed)
+        dataStore.edit { it[PLAYBACK_SPEED] = normalized }
     }
 
     suspend fun setWifiOnly(enabled: Boolean) {

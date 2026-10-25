@@ -17,6 +17,7 @@ val hasKeystore = keystoreProperties.isNotEmpty()
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
 }
 
@@ -69,9 +70,17 @@ android {
         }
     }
 
+    // MockContentResolver: serves a fixture documents provider to the SAF import tests.
+    useLibrary("android.test.mock")
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    sourceSets {
+        // JVM tests parse the same small audio fixtures the instrumented tests import.
+        getByName("test").resources.srcDir("src/androidTest/assets")
     }
 
     buildFeatures {
@@ -105,6 +114,8 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
+    // MetadataRetriever: reads tracks and embedded m4b chapters without starting playback
+    implementation(libs.androidx.media3.inspector)
 
     // Yandex ID sign-in (returns an OAuth access token for the Disk REST API)
     implementation(libs.yandex.authsdk)
@@ -114,6 +125,9 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.datastore.preferences)
+
+    // book.json manifest and, later, the synchronization documents
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)

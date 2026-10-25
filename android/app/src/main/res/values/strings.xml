@@ -1,5 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AudioBook Player</string>
-    <string name="main_placeholder">Библиотека аудиокниг появится здесь</string>
+
+    <string name="library_title">Библиотека</string>
+    <string name="library_empty">Здесь пока пусто. Добавьте папку с mp3 или файл m4b.</string>
+    <string name="library_import_folder">Добавить папку</string>
+    <string name="library_import_file">Добавить файл</string>
+    <string name="continue_listening">Продолжить слушать</string>
+    <string name="continue_play">Продолжить</string>
+    <string name="continue_position">%1$s из %2$s</string>
+
+    <string name="import_preparing">Подготовка к импорту…</string>
+    <string name="import_copying">Копирование книги</string>
+    <string name="import_file">Файл %1$d из %2$d: %3$s</string>
+    <string name="import_bytes">%1$s из %2$s</string>
+    <string name="import_failed">Не удалось импортировать книгу</string>
+    <string name="import_error_no_audio">В выбранной папке или файле нет аудио: поддерживаются mp3, m4a, m4b и aac.</string>
+    <string name="import_error_io">Не удалось прочитать файлы или сохранить их на устройство. Проверьте свободное место и попробуйте ещё раз.</string>
+    <string name="import_error_unknown">Произошла непредвиденная ошибка. Попробуйте выбрать книгу ещё раз.</string>
+    <string name="import_cancel">Отменить</string>
+    <string name="import_close">Закрыть</string>
+
+    <string name="book_narrator">Читает: %1$s</string>
+    <string name="book_summary">%1$s · %2$s</string>
+    <plurals name="book_chapters">
+        <item quantity="one">%d глава</item>
+        <item quantity="few">%d главы</item>
+        <item quantity="many">%d глав</item>
+        <item quantity="other">%d главы</item>
+    </plurals>
+
+    <string name="book_listen">Слушать</string>
+
+    <string name="player_play">Воспроизвести</string>
+    <string name="player_pause">Пауза</string>
+    <string name="player_back_15">Назад на 15 секунд</string>
+    <string name="player_forward_15">Вперёд на 15 секунд</string>
+    <string name="player_seek_seconds">15</string>
+    <string name="player_previous_chapter">Предыдущая глава</string>
+    <string name="player_next_chapter">Следующая глава</string>
+    <string name="player_position">Позиция в главе</string>
+    <string name="player_chapter_of">Глава %1$d из %2$d</string>
+    <string name="player_remaining">−%1$s</string>
+    <string name="player_speed">%1$s×</string>
+    <string name="player_speed_title">Скорость воспроизведения</string>
+    <string name="player_speed_done">Готово</string>
+
+    <string name="sleep_timer">Таймер</string>
+    <string name="sleep_timer_title">Таймер сна</string>
+    <string name="sleep_timer_remaining">Сон через %1$s</string>
+    <string name="sleep_timer_end_of_chapter">До конца главы</string>
+    <string name="sleep_timer_off">Выключить таймер</string>
+    <plurals name="sleep_timer_minutes">
+        <item quantity="one">%d минута</item>
+        <item quantity="few">%d минуты</item>
+        <item quantity="many">%d минут</item>
+        <item quantity="other">%d минуты</item>
+    </plurals>
+
+    <string name="bookmark_add">Добавить закладку</string>
+    <string name="bookmark_new_title">Закладка на %1$s</string>
+    <string name="bookmark_note_hint">Заметка (необязательно)</string>
+    <string name="bookmark_save">Сохранить</string>
+    <string name="bookmark_cancel">Отмена</string>
+    <string name="bookmark_added">Закладка добавлена</string>
+    <string name="bookmark_delete">Удалить закладку</string>
+    <string name="bookmarks_title">Закладки</string>
+    <string name="bookmarks_open">Открыть закладки</string>
+    <string name="bookmarks_empty">Закладок пока нет</string>
 </resources>

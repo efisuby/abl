@@ -57,6 +57,30 @@ The app MUST fill title, author, narrator, series, series number and cover from 
 - **WHEN** the folder `Ivan Yefremov - The Bull's Hour` is imported without tags
 - **THEN** title and author are derived from the folder name and the cover stays empty
 
+#### Scenario: Series in tags
+
+- **WHEN** a file carries a series as `TXXX:SERIES` and `TXXX:SERIES-PART` (ID3), `----:com.apple.iTunes:SERIES` and `SERIES-PART` (MP4), or the iTunes movement name and number (`MVNM`/`MVIN`, `©mvn`/`©mvi`), for example `Ересь Хоруса` and `2/10`
+- **THEN** the book gets the series `Ересь Хоруса` and the series number 2
+
+### Requirement: Speech-synthesis markup cleanup
+
+The app MUST remove speech-synthesis markup from chapter titles and text tags on import: stress marks (`+` before a stressed Cyrillic vowel) and the control tags `[break]`, `[pause]`, `[pause:N]` and `[voice:…]`, including a `[voice:` tag cut off by the end of the text. Text that only resembles markup MUST be kept. A title left empty MUST get the usual fallback.
+
+#### Scenario: Chapter titles from a TTS-generated book
+
+- **WHEN** an m4b is imported whose chapter titles are `Д+эн Абн+етт Возвыш+ение Х+оруса; ` and `ПРИМ+АРХИ Х+орус[break]. прим+арх`
+- **THEN** the chapters are titled `Дэн Абнетт Возвышение Хоруса` and `ПРИМАРХИ Хорус. примарх`
+
+#### Scenario: Title consisting only of markup
+
+- **WHEN** a chapter title is `[voice:/tmp/proc-1/voice.wav` with no closing bracket
+- **THEN** the chapter gets the fallback title instead of an empty one
+
+#### Scenario: Text that only looks like markup
+
+- **WHEN** a title is `C++ для начинающих [Часть 1]`
+- **THEN** it is kept unchanged
+
 ### Requirement: Metadata editing
 
 The user MUST be able to change a book's title, author, narrator, series, series number and cover. Changes are stored locally and take part in synchronization.

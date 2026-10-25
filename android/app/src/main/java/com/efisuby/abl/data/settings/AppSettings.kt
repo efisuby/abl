@@ -1,5 +1,7 @@
 package com.efisuby.abl.data.settings
 
+import kotlin.math.roundToInt
+
 enum class ThemeMode {
     SYSTEM,
     LIGHT,
@@ -17,6 +19,14 @@ data class AppSettings(
         const val MIN_SPEED = 0.5f
         const val MAX_SPEED = 3.0f
         const val DEFAULT_SPEED = 1.0f
+        const val SPEED_STEP = 0.1f
+
+        /** Clamps to [MIN_SPEED]..[MAX_SPEED] and rounds to [SPEED_STEP] (playback spec). */
+        fun normalizeSpeed(speed: Float): Float {
+            if (speed.isNaN()) return DEFAULT_SPEED
+            val steps = (speed.coerceIn(MIN_SPEED, MAX_SPEED) / SPEED_STEP).roundToInt()
+            return steps / 10f
+        }
     }
 }
 
