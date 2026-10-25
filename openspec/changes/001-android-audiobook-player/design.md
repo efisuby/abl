@@ -42,6 +42,8 @@ DAOs return `Flow`, ViewModels combine them into `UiState`. The network and the 
 
 **Why:** one path for UI updates, no drift between "network" and "local" state, and free updates after synchronization.
 
+**Library queries:** search, filters, sort order and series grouping run in memory over the observed book list (`LibraryArranger`), not in SQL. SQLite `NOCASE` and `LIKE` fold case for ASCII only, so a Cyrillic query would miss books; a personal library is small enough to arrange on every change, and a `Collator` gives the right order for Russian titles.
+
 ### D3. Chapters as `MediaItem` with `ClippingConfiguration`
 
 For an mp3 folder each chapter is its own `MediaItem` with its own URI. For an m4b there is one `MediaItem` per chapter with the same URI and `ClippingConfiguration(startMs, endMs)`, with `mediaId` = chapter id.

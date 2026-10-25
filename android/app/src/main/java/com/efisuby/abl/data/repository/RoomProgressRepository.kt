@@ -19,6 +19,9 @@ class RoomProgressRepository(
     override fun observe(bookId: String): Flow<Progress?> =
         progressDao.observeByBook(bookId).map { it?.toDomain() }
 
+    override fun observeBookPositions(): Flow<Map<String, Long>> =
+        progressDao.observeBookPositions().map { rows -> rows.associate { it.bookId to it.positionMs } }
+
     override suspend fun get(bookId: String): Progress? =
         progressDao.getByBook(bookId)?.toDomain()
 
@@ -29,6 +32,8 @@ class RoomProgressRepository(
         totalListenedMs: Long,
     ) {
         database.withTransaction {
+            // The player may report a last position of a book that was just deleted.
+            if (database.bookDao().getById(bookId) == null) return@withTransaction
             val current = progressDao.getByBook(bookId)
             val now = System.currentTimeMillis()
             // Monotonic: a clock that jumped backwards must not make a newer position look older.

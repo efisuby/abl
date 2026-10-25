@@ -30,6 +30,13 @@
         android:textAppearance="?attr/textAppearanceTitleMedium" />
 
     <TextView
+        android:id="@+id/series"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+    <TextView
         android:id="@+id/narrator"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -43,12 +50,43 @@
         android:layout_marginTop="8dp"
         android:textAppearance="?attr/textAppearanceBodyMedium" />
 
-    <Button
-        android:id="@+id/listen"
-        android:layout_width="wrap_content"
+    <TextView
+        android:id="@+id/progressText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:importantForAccessibility="no"
+        android:max="100"
+        app:trackCornerRadius="2dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="@string/book_listen"
-        app:icon="@drawable/ic_play" />
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/listen"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/book_listen"
+            app:icon="@drawable/ic_play" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/status"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            app:icon="@drawable/ic_arrow_drop_down"
+            app:iconGravity="end" />
+    </LinearLayout>
 
 </LinearLayout>

@@ -78,7 +78,7 @@ class PlayerActivity : AppCompatActivity() {
 
         if (savedInstanceState?.getBoolean(STATE_REQUEST_HANDLED) != true) {
             intent.getStringExtra(EXTRA_BOOK_ID)?.let {
-                pendingRequest = PlaybackIds.request(it, intent.getStringExtra(EXTRA_CHAPTER_ID))
+                pendingRequest = requestFrom(intent, it)
             }
         }
 
@@ -125,7 +125,7 @@ class PlayerActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         val bookId = intent.getStringExtra(EXTRA_BOOK_ID) ?: return
-        pendingRequest = PlaybackIds.request(bookId, intent.getStringExtra(EXTRA_CHAPTER_ID))
+        pendingRequest = requestFrom(intent, bookId)
         if (controller != null) requestNotificationsThenStart()
     }
 
@@ -298,13 +298,22 @@ class PlayerActivity : AppCompatActivity() {
     companion object {
         private const val EXTRA_BOOK_ID = "bookId"
         private const val EXTRA_CHAPTER_ID = "chapterId"
+        private const val EXTRA_POSITION_MS = "positionMs"
         private const val STATE_REQUEST_HANDLED = "requestHandled"
         private const val POSITION_REFRESH_MS = 500L
 
         /** Plays [bookId] from [chapterId], or from the saved position when it is null. */
-        fun intent(context: Context, bookId: String, chapterId: String? = null): Intent =
+        /** [positionMs] inside [chapterId] is for bookmarks; without a chapter the saved position is used. */
+        fun intent(context: Context, bookId: String, chapterId: String? = null, positionMs: Long = 0L): Intent =
             Intent(context, PlayerActivity::class.java)
                 .putExtra(EXTRA_BOOK_ID, bookId)
                 .putExtra(EXTRA_CHAPTER_ID, chapterId)
+                .putExtra(EXTRA_POSITION_MS, positionMs)
+
+        private fun requestFrom(intent: Intent, bookId: String): String = PlaybackIds.request(
+            bookId,
+            intent.getStringExtra(EXTRA_CHAPTER_ID),
+            intent.getLongExtra(EXTRA_POSITION_MS, 0L),
+        )
     }
 }

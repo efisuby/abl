@@ -3,9 +3,12 @@ package com.efisuby.abl.ui.common
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.view.View
+import androidx.annotation.StringRes
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import com.efisuby.abl.R
+import com.efisuby.abl.domain.model.BookStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -49,4 +52,11 @@ suspend fun loadCover(path: String?, maxPx: Int): Bitmap? = withContext(Dispatch
     var sample = 1
     while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxPx) sample *= 2
     BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = sample })
+}
+
+@StringRes
+fun BookStatus.labelRes(): Int = when (this) {
+    BookStatus.NOT_STARTED -> R.string.status_not_started
+    BookStatus.IN_PROGRESS -> R.string.status_in_progress
+    BookStatus.FINISHED -> R.string.status_finished
 }

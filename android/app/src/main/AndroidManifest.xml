@@ -37,6 +37,11 @@
             android:exported="false" />
 
         <activity
+            android:name=".ui.edit.EditBookActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".ui.player.PlayerActivity"
             android:exported="false"
             android:launchMode="singleTop" />

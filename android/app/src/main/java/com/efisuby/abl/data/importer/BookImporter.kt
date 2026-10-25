@@ -161,7 +161,7 @@ class BookImporter(
         seriesIndex = book.seriesIndex,
         source = book.source.name,
         remotePath = book.remotePath,
-        cover = book.coverPath?.let { BookStorage.COVER_FILE },
+        cover = book.coverPath?.let { File(it).name },
         totalDurationMs = book.totalDurationMs,
         addedAt = book.addedAt,
         chapters = chapters.map {

@@ -3,4 +3,5 @@
     <dimen name="book_cover_size">160dp</dimen>
     <dimen name="list_cover_size">56dp</dimen>
     <dimen name="continue_cover_size">72dp</dimen>
+    <dimen name="series_indent">16dp</dimen>
 </resources>

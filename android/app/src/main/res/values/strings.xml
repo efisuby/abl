@@ -6,6 +6,30 @@
     <string name="library_empty">Здесь пока пусто. Добавьте папку с mp3 или файл m4b.</string>
     <string name="library_import_folder">Добавить папку</string>
     <string name="library_import_file">Добавить файл</string>
+    <string name="library_search">Поиск по названию, автору, серии</string>
+    <string name="library_nothing_found">Ничего не найдено</string>
+    <string name="library_reset_filters">Сбросить фильтры</string>
+    <string name="filter_status_all">Все статусы</string>
+    <string name="filter_availability_all">Везде</string>
+    <string name="availability_on_device">На устройстве</string>
+    <string name="availability_in_cloud">В облаке</string>
+    <string name="sort_title">По названию</string>
+    <string name="sort_author">По автору</string>
+    <string name="sort_added">Недавно добавленные</string>
+    <string name="sort_last_listened">Недавно слушали</string>
+    <string name="list_series_index">№%1$d</string>
+    <plurals name="series_books">
+        <item quantity="one">%d книга</item>
+        <item quantity="few">%d книги</item>
+        <item quantity="many">%d книг</item>
+        <item quantity="other">%d книги</item>
+    </plurals>
+
+    <string name="status_not_started">Не начата</string>
+    <string name="status_in_progress">Слушаю</string>
+    <string name="status_finished">Прослушана</string>
+    <string name="status_with_percent">%1$s · %2$d%%</string>
+
     <string name="continue_listening">Продолжить слушать</string>
     <string name="continue_play">Продолжить</string>
     <string name="continue_position">%1$s из %2$s</string>
@@ -31,6 +55,31 @@
     </plurals>
 
     <string name="book_listen">Слушать</string>
+    <string name="book_back">Назад</string>
+    <string name="book_series">%1$s · книга %2$d</string>
+    <string name="book_progress">Глава %1$d из %2$d · %3$d%%</string>
+    <string name="book_change_status">Изменить статус</string>
+    <string name="book_bookmarks">Закладки</string>
+    <string name="book_chapters">Главы</string>
+    <string name="book_current_chapter">Текущая глава</string>
+    <string name="book_edit">Редактировать</string>
+    <string name="book_delete">Удалить с устройства</string>
+    <string name="book_delete_title">Удалить книгу?</string>
+    <string name="book_delete_message">«%1$s» будет удалена с устройства вместе с прогрессом и закладками. Файлы на Яндекс Диске не затрагиваются.</string>
+    <string name="book_delete_confirm">Удалить</string>
+    <string name="book_deleted">Книга удалена</string>
+
+    <string name="edit_title">Редактирование</string>
+    <string name="edit_field_title">Название</string>
+    <string name="edit_field_author">Автор</string>
+    <string name="edit_field_narrator">Чтец</string>
+    <string name="edit_field_series">Серия</string>
+    <string name="edit_field_series_index">Номер в серии</string>
+    <string name="edit_cover">Сменить обложку</string>
+    <string name="edit_save">Сохранить</string>
+    <string name="edit_title_required">Укажите название</string>
+    <string name="edit_cover_failed">Не удалось открыть изображение</string>
+    <string name="edit_save_failed">Не удалось сохранить изменения</string>
 
     <string name="player_play">Воспроизвести</string>
     <string name="player_pause">Пауза</string>

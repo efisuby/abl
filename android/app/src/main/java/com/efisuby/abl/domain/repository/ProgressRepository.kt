@@ -11,6 +11,9 @@ interface ProgressRepository {
 
     fun observe(bookId: String): Flow<Progress?>
 
+    /** Listened position from the start of each book that has progress, by book id. */
+    fun observeBookPositions(): Flow<Map<String, Long>>
+
     suspend fun get(bookId: String): Progress?
 
     suspend fun savePosition(

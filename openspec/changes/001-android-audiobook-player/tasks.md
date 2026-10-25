@@ -32,13 +32,13 @@
 
 ## 4. Library
 
-- [ ] 4.1 Build the home screen with the book list (cover, author, status, progress); verify with a UI test on three books with different statuses
-- [ ] 4.2 Build the book screen with cover, metadata, chapter list and bookmarks; verify with a UI test: tapping a chapter starts its playback
-- [ ] 4.3 Implement search by title, author and series, filters by status and source, and sorting; verify with unit tests of DAO queries on a set of 10 books
-- [ ] 4.4 Implement series grouping and ordering within a series; verify with a unit test: books numbered 2, 1, 3 are shown as 1, 2, 3
-- [ ] 4.5 Implement metadata editing and cover picking; verify with a UI test: after saving, the new title is visible in the list and on the book screen
-- [ ] 4.6 Implement book deletion with confirmation and directory cleanup; verify with a unit test: after deletion the book directory is gone and the record disappears from the database
-- [ ] 4.7 Add empty states for the library and search; verify with a UI test: with an empty library an import hint is visible
+- [x] 4.1 Build the home screen with the book list (cover, author, status, progress); verify with a UI test on three books with different statuses
+- [x] 4.2 Build the book screen with cover, metadata, chapter list and bookmarks; verify with a UI test: tapping a chapter starts its playback
+- [x] 4.3 Implement search by title, author and series, filters by status and source, and sorting (in memory, see design D2); verify with JVM unit tests of `LibraryArranger` on a set of 10 books
+- [x] 4.4 Implement series grouping and ordering within a series; verify with a unit test: books numbered 2, 1, 3 are shown as 1, 2, 3
+- [x] 4.5 Implement metadata editing and cover picking; verify with a UI test: after saving, the new title is visible in the list and on the book screen
+- [x] 4.6 Implement book deletion with confirmation and directory cleanup; verify with a unit test: after deletion the book directory is gone and the record disappears from the database
+- [x] 4.7 Add empty states for the library and search; verify with a UI test: with an empty library an import hint is visible
 
 ## 5. Settings, theme, localization
 

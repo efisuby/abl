@@ -72,6 +72,25 @@ class BookStorage(val root: File) {
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
+    /**
+     * Stores a cover picked by the user under a new name and removes the previous ones. A new
+     * name changes `Book.coverPath`, which is what tells screens and the notification to reload.
+     */
+    fun replaceCover(bookId: String, jpeg: ByteArray, stamp: Long): File {
+        val dir = bookDir(bookId).apply { mkdirs() }
+        val target = File(dir, "cover-$stamp.jpg")
+        val part = File(target.path + PART_SUFFIX)
+        try {
+            part.writeBytes(jpeg)
+            if (!part.renameTo(target)) throw IOException("Cannot rename $part to $target")
+        } finally {
+            part.delete()
+        }
+        dir.listFiles { file -> file != target && file.name.startsWith("cover") && file.name.endsWith(".jpg") }
+            ?.forEach { it.delete() }
+        return target
+    }
+
     /** Removes everything stored for the book; used for failed imports and deletion. */
     fun delete(bookId: String) {
         bookDir(bookId).deleteRecursively()

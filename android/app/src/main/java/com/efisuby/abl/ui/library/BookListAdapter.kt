@@ -2,42 +2,92 @@ package com.efisuby.abl.ui.library
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.isVisible
+import androidx.core.view.updatePaddingRelative
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.efisuby.abl.R
 import com.efisuby.abl.databinding.ItemBookBinding
+import com.efisuby.abl.databinding.ItemSeriesHeaderBinding
 import com.efisuby.abl.domain.model.Book
+import com.efisuby.abl.domain.model.BookStatus
 import com.efisuby.abl.ui.common.formatDuration
+import com.efisuby.abl.ui.common.labelRes
 import com.efisuby.abl.ui.common.loadCover
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-/** A minimal book row: cover, title, author and length. Statuses and progress come with task 4.1. */
+/** Library rows: series headers, and books with cover, author, length, status and listened share. */
 class BookListAdapter(
     private val scope: CoroutineScope,
     private val onClick: (Book) -> Unit,
-) : ListAdapter<Book, BookListAdapter.Holder>(Diff) {
+) : ListAdapter<LibraryItem, RecyclerView.ViewHolder>(Diff) {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder =
-        Holder(ItemBookBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+    override fun getItemViewType(position: Int): Int = when (getItem(position)) {
+        is LibraryItem.SeriesHeader -> TYPE_SERIES
+        is LibraryItem.BookItem -> TYPE_BOOK
+    }
 
-    override fun onBindViewHolder(holder: Holder, position: Int) = holder.bind(getItem(position))
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return if (viewType == TYPE_SERIES) {
+            SeriesHolder(ItemSeriesHeaderBinding.inflate(inflater, parent, false))
+        } else {
+            BookHolder(ItemBookBinding.inflate(inflater, parent, false))
+        }
+    }
 
-    override fun onViewRecycled(holder: Holder) = holder.recycle()
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (val item = getItem(position)) {
+            is LibraryItem.SeriesHeader -> (holder as SeriesHolder).bind(item)
+            is LibraryItem.BookItem -> (holder as BookHolder).bind(item)
+        }
+    }
 
-    inner class Holder(private val binding: ItemBookBinding) : RecyclerView.ViewHolder(binding.root) {
+    override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
+        (holder as? BookHolder)?.recycle()
+    }
 
+    private class SeriesHolder(private val binding: ItemSeriesHeaderBinding) : RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(item: LibraryItem.SeriesHeader) {
+            binding.name.text = item.name
+            binding.count.text = binding.root.resources.getQuantityString(R.plurals.series_books, item.count, item.count)
+        }
+    }
+
+    private inner class BookHolder(private val binding: ItemBookBinding) : RecyclerView.ViewHolder(binding.root) {
+
+        private val basePaddingStart = binding.root.paddingStart
         private var coverJob: Job? = null
 
-        fun bind(book: Book) {
+        fun bind(item: LibraryItem.BookItem) {
+            val book = item.book
+            val context = binding.root.context
             binding.root.setOnClickListener { onClick(book) }
+            binding.root.updatePaddingRelative(
+                start = basePaddingStart + if (item.inSeries) context.resources.getDimensionPixelSize(R.dimen.series_indent) else 0,
+            )
             binding.title.text = book.title
-            val duration = formatDuration(book.totalDurationMs)
-            binding.subtitle.text = book.author?.let { "$it · $duration" } ?: duration
+            binding.subtitle.text = listOfNotNull(
+                book.seriesIndex?.takeIf { item.inSeries }?.let { context.getString(R.string.list_series_index, it) },
+                book.author,
+                formatDuration(book.totalDurationMs),
+            ).joinToString(" · ")
+
+            val status = context.getString(book.status.labelRes())
+            binding.status.text = if (book.status == BookStatus.IN_PROGRESS) {
+                context.getString(R.string.status_with_percent, status, item.percent)
+            } else {
+                status
+            }
+            binding.progress.isVisible = book.status == BookStatus.IN_PROGRESS
+            binding.progress.progress = item.percent
+
             recycle()
-            val size = binding.root.resources.getDimensionPixelSize(R.dimen.list_cover_size)
+            val size = context.resources.getDimensionPixelSize(R.dimen.list_cover_size)
             coverJob = scope.launch { binding.cover.setImageBitmap(loadCover(book.coverPath, size)) }
         }
 
@@ -47,8 +97,18 @@ class BookListAdapter(
         }
     }
 
-    private object Diff : DiffUtil.ItemCallback<Book>() {
-        override fun areItemsTheSame(oldItem: Book, newItem: Book) = oldItem.id == newItem.id
-        override fun areContentsTheSame(oldItem: Book, newItem: Book) = oldItem == newItem
+    private object Diff : DiffUtil.ItemCallback<LibraryItem>() {
+        override fun areItemsTheSame(oldItem: LibraryItem, newItem: LibraryItem) = when {
+            oldItem is LibraryItem.BookItem && newItem is LibraryItem.BookItem -> oldItem.book.id == newItem.book.id
+            oldItem is LibraryItem.SeriesHeader && newItem is LibraryItem.SeriesHeader -> oldItem.name == newItem.name
+            else -> false
+        }
+
+        override fun areContentsTheSame(oldItem: LibraryItem, newItem: LibraryItem) = oldItem == newItem
+    }
+
+    private companion object {
+        const val TYPE_SERIES = 0
+        const val TYPE_BOOK = 1
     }
 }

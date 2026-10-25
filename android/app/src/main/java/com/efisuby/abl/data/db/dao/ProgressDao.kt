@@ -6,8 +6,25 @@ import androidx.room.Upsert
 import com.efisuby.abl.data.db.entity.ProgressEntity
 import kotlinx.coroutines.flow.Flow
 
+/** Position from the start of the book: earlier chapters plus the offset in the saved one. */
+data class BookPositionRow(val bookId: String, val positionMs: Long, val finished: Boolean)
+
 @Dao
 interface ProgressDao {
+
+    @Query(
+        """
+        SELECT p.bookId AS bookId,
+            p.positionMs + COALESCE((
+                SELECT SUM(c.durationMs) FROM chapters c
+                WHERE c.bookId = p.bookId
+                    AND c.chapterIndex < (SELECT cur.chapterIndex FROM chapters cur WHERE cur.id = p.chapterId)
+            ), 0) AS positionMs,
+            p.finished AS finished
+        FROM progress p
+        """,
+    )
+    fun observeBookPositions(): Flow<List<BookPositionRow>>
 
     @Query("SELECT * FROM progress WHERE bookId = :bookId")
     fun observeByBook(bookId: String): Flow<ProgressEntity?>

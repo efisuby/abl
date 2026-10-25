@@ -64,7 +64,9 @@ adb install -r .../app-debug.apk                                                
 - **Room schema is exported** to `android/app/schemas/` (currently version 1). No `fallbackToDestructiveMigration` — any entity change needs a version bump + `Migration` + committed schema JSON.
 - **Enums stored as `String` (`.name`)** and mapped back with `valueOf()` in `data/db/Mappers.kt`. Renaming an enum constant (`BookSource`, `BookStatus`, `DownloadState`) breaks existing rows — needs a migration.
 - **`saveBook()` replaces all chapters** (delete by bookId + upsert in one transaction). `progress.chapterId` and `bookmarks.chapterId` have **no FK** to `chapters` — chapter IDs must be deterministic, otherwise re-import leaves dangling references.
-- **`deleteBook()` removes DB rows only** (chapters/progress/bookmarks via `ON DELETE CASCADE`). Deleting `filesDir/books/<bookId>/` is still TODO (task 4.6).
+- **`LibraryRepository.deleteBook()` removes DB rows only** (chapters/progress/bookmarks via `ON DELETE CASCADE`). UI must delete through `BookActions.delete()` (`AppContainer.bookActions`), which also removes `filesDir/books/<bookId>/`. `PlaybackService` stops and clears the queue when the playing book disappears from the DB; `savePosition()` ignores a book that no longer exists.
+- **`BookActions`** also owns `setStatus()` (status + `progress.finished`, position kept) and `updateMetadata()` (DB + `book.json` + cover as `cover-<stamp>.jpg`, so the path changes and the list reloads it).
+- **Library search/filter/sort/series grouping is in memory** (`domain/library/LibraryArranger`), not SQL: SQLite NOCASE/LIKE folds ASCII only. `ProgressDao.observeBookPositions()` gives the absolute position for the listened %.
 - **Progress `updatedAt` is monotonic**: `max(now, previous + 1)` — required for cross-device LWW merge. Keep this in any new write path (`savePosition` also bumps `books.lastListenedAt`).
 - **Bookmarks use tombstones** (`deleted = 1` via `markDeleted`), never hard delete — needed for union-merge sync. `RoomBookmarkRepository` (in `AppContainer`) orders by chapter index, then position — the DAO alone orders by position only.
 - **Settings split**: only `theme`, `language`, `playback_speed` are syncable (`SyncableSettings.keys`). `wifi_only` and `last_sync_at` are device-local and must never be synced. Speed is clamped to 0.5–3.0.
@@ -79,21 +81,20 @@ adb install -r .../app-debug.apk                                                
 - **Playback (`playback/`)**: `PlaybackService` (MediaSessionService + ExoPlayer, speech audio attributes, ±15 s increments). Controllers ask for a book with `PlaybackIds.request(bookId, chapterId?, positionMs?)` as the only media item; `onSetMediaItems` answers with one item per chapter (`ChapterQueue` → `QueueEntry.toMediaItem`, mediaId `"$bookId/$chapterId"`, clipped for m4b, last chapter of a file unclipped). Progress writes go through one ordered `Channel` in `applicationScope` (a late position write must not undo "finished"); `PositionTracker` throttles to 5 s and ignores chapters of a previous book during a queue swap. Sleep timer = custom session command `SleepTimer.COMMAND`, state in session extras; "end of chapter" = `pauseAtEndOfMediaItems`. Speed lives in DataStore (`AppSettings.normalizeSpeed`), the service collects it.
 - **Media3 unstable APIs** (`CommandButton` prefs, `pauseAtEndOfMediaItems`, `Chapter`) need `@OptIn(UnstableApi::class)` or lint fails with `UnsafeOptInUsageError`.
 - **Test fixtures**: `app/src/androidTest/assets/fixtures/` (ffmpeg-generated, also on the JVM test classpath). SAF tests use `FixtureDocumentsProvider` + `MockContentResolver` (`useLibrary("android.test.mock")`). `M4bSpikeTest` runs only if real books are in `/data/local/tmp/abl-spike/`.
-- **Strings**: only `values/strings.xml` (Russian). `values-en/` is not created yet (task 5.2). `MainActivity` = «Продолжить слушать» card + minimal library list + «Добавить папку/файл» (full home screen is task 4.1); `BookActivity` = minimal book screen: header + «Слушать» + chapters (tap plays); `PlayerActivity` = player with speed, sleep timer, bookmarks (full book screen is task 4.2).
+- **Strings**: only `values/strings.xml` (Russian). `values-en/` is not created yet (task 5.2). `MainActivity` = toolbar search + status/source/sort chips + «Продолжить слушать» card + library with series headers, status and % + empty states; `BookActivity` = header (series, progress, status popup) + bookmarks + chapters, menu edit/delete; `EditBookActivity` = metadata + cover (`PickVisualMedia`, scaled ≤1024 px JPEG); `PlayerActivity` accepts chapter + position (bookmarks). Shared UI-test helpers: `androidTest/.../ui/UiTestSupport.kt`.
 - OpenSpec: all artifacts in English (`openspec/config.yaml`); every task must state how it is verified. `openspec/specs/` is empty until change 001 is archived.
 
 ---
 
-## Next Up: Task Group 2 — Local Import & Metadata
+## Next Up: Task Group 5 — Settings, theme, localization
 
 | Task | Description | Verification |
 |------|-------------|--------------|
-| 2.1 | SAF folder/file picker (`OpenDocumentTree`, `OpenDocument`) | Instrumented test: 3 mp3 → 1 book, 3 chapters |
-| 2.2 | Copy to `filesDir/books/<bookId>` via `.part` + `book.json` | Unit test: manifest serialization, cancelled copy leaves no `.part` |
-| 2.3 | Metadata/cover extraction (`MediaMetadataRetriever`) with folder-name fallback | Unit tests: full tags, partial tags, no tags |
-| 2.4 | **m4b chapter spike** → cascade: `MediaMetadata.chapters` → `chpl` → chapter track → single chapter | `docs/spikes/m4b-chapters.md` + unit tests on extracted boundaries |
-| 2.5 | Nested folder traversal, chapter ordering by path | Unit test: `part-1/02.mp3`, `part-1/01.mp3`, `part-2/01.mp3` → chapters 1,2,3 |
-| 2.6 | Import screen with copy progress & errors | Instrumented test: import folder → shows progress → opens book screen |
+| 5.1 | Light / dark / system theme, applied immediately | Instrumented test: switching changes the activity theme without restart |
+| 5.2 | `values-en/strings.xml` | Build + manual check of both languages |
+| 5.3 | Settings screen: theme, language, Wi-Fi only, storage, sync, sign-out | UI test: all elements reachable |
+
+Groups 1–4 are done (see `tasks.md`).
 
 ### Key Design Decisions (from `design.md`)
 - **Storage layout:** `filesDir/books/<bookId>/{book.json,cover.jpg,audio/}` — private, excluded from backup
@@ -170,7 +171,7 @@ openspec list
 
 ## Handoff Notes for Next Agent
 
-1. **Group 2 status (2026-10-25):** Group 2 complete. Group 3 complete (3.1, 3.4, 3.9 checked manually on the S24+). Next: group 4 (library).
+1. **Status (2026-10-25):** Groups 1–4 complete (3.1, 3.4, 3.9 checked manually on the S24+). Next: group 5 (settings, theme, localization).
 2. **m4b spike done** — `docs/spikes/m4b-chapters.md`; sample has no Audible/iTunes m4b yet.
 3. **Backup rules are verified** — don't remove them. The A/B test proved exclusion works.
 4. **Signing is stable** — debug and release use the same release key. OAuth fingerprint won't change.

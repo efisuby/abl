@@ -96,9 +96,12 @@
             style="@style/Widget.Material3.Button.TextButton.Icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minWidth="0dp"
+            android:paddingHorizontal="8dp"
             android:contentDescription="@string/player_back_15"
             android:text="@string/player_seek_seconds"
             app:icon="@drawable/ic_replay"
+            app:iconPadding="4dp"
             app:iconSize="28dp" />
 
         <com.google.android.material.button.MaterialButton
@@ -116,10 +119,13 @@
             style="@style/Widget.Material3.Button.TextButton.Icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minWidth="0dp"
+            android:paddingHorizontal="8dp"
             android:contentDescription="@string/player_forward_15"
             android:text="@string/player_seek_seconds"
             app:icon="@drawable/ic_forward"
             app:iconGravity="end"
+            app:iconPadding="4dp"
             app:iconSize="28dp" />
 
         <com.google.android.material.button.MaterialButton

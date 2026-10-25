@@ -10,6 +10,7 @@ import com.efisuby.abl.data.importer.MediaMetadataTagReader
 import com.efisuby.abl.data.importer.Mp4ChapterTrackReader
 import com.efisuby.abl.data.importer.ImportSources
 import com.efisuby.abl.data.importer.SafImportSources
+import com.efisuby.abl.data.repository.BookActions
 import com.efisuby.abl.data.repository.DeviceIdProvider
 import com.efisuby.abl.data.repository.RoomBookmarkRepository
 import com.efisuby.abl.data.repository.RoomLibraryRepository
@@ -63,6 +64,8 @@ class AppContainer(context: Context) {
             ),
         )
     }
+
+    val bookActions: BookActions by lazy { BookActions(libraryRepository, progressRepository, bookStorage) }
 
     /** A `var` so instrumented tests can serve fixtures through a mock content resolver. */
     var importSources: ImportSources = SafImportSources(appContext.contentResolver)

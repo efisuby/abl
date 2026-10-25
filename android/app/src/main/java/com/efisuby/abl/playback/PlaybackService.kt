@@ -109,6 +109,16 @@ class PlaybackService : MediaSessionService() {
                 player.setPlaybackSpeed(it)
             }
         }
+        // A deleted book must not keep playing from files that are gone.
+        scope.launch {
+            container.libraryRepository.observeBooks().map { books -> books.mapTo(HashSet()) { it.id } }.collect { ids ->
+                val bookId = current()?.first ?: return@collect
+                if (bookId !in ids) {
+                    player.stop()
+                    player.clearMediaItems()
+                }
+            }
+        }
         scope.launch {
             while (isActive) {
                 delay(TICK_MS)
