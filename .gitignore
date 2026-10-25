@@ -1,0 +1,25 @@
+# Gradle
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local machine configuration (Android SDK path, etc.)
+local.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+captures/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code personal overrides
+.claude/settings.local.json
+
+# Logs and crash dumps
+*.log
+*.hprof

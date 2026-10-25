@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AudioBook Player</string>
+    <string name="main_placeholder">Библиотека аудиокниг появится здесь</string>
+</resources>
