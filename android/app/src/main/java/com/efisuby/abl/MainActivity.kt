@@ -1,8 +1,8 @@
-package com.abl.audiobookplayer
+package com.efisuby.abl
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.abl.audiobookplayer.databinding.ActivityMainBinding
+import com.efisuby.abl.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 

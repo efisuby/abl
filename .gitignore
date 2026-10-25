@@ -20,6 +20,15 @@ Thumbs.db
 # Claude Code personal overrides
 .claude/settings.local.json
 
+# Signing material — never commit the real keystore or its passwords
+keystore.properties
+*.jks
+*.keystore
+!keystore.properties.example
+
+# Claude Code agent config is personal, not part of the project
+.claude/
+
 # Logs and crash dumps
 *.log
 *.hprof

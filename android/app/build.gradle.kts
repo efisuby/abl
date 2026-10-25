@@ -1,4 +1,18 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.io.FileInputStream
+import java.util.Properties
+
+// Public OAuth client id — embedded into the APK manifest anyway, so it is not a secret.
+val yandexClientId = "4a94a7008ebc4ad2b5c0800dd28aed62"
+
+// Signing material is kept out of version control; see keystore.properties.example.
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        FileInputStream(keystorePropertiesFile).use { load(it) }
+    }
+}
+val hasKeystore = keystoreProperties.isNotEmpty()
 
 plugins {
     alias(libs.plugins.android.application)
@@ -7,26 +21,47 @@ plugins {
 }
 
 android {
-    namespace = "com.abl.audiobookplayer"
+    namespace = "com.efisuby.abl"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.abl.audiobookplayer"
+        applicationId = "com.efisuby.abl"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Consumed by the Yandex ID SDK manifest.
+        manifestPlaceholders["YANDEX_CLIENT_ID"] = yandexClientId
+    }
+
+    signingConfigs {
+        create("release") {
+            if (hasKeystore) {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
         debug {
             isMinifyEnabled = false
+            // Same key as release: keeps the OAuth fingerprint stable across build types.
+            if (hasKeystore) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            if (hasKeystore) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -70,6 +105,9 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
+
+    // Yandex ID sign-in (returns an OAuth access token for the Disk REST API)
+    implementation(libs.yandex.authsdk)
 
     // Local persistence
     implementation(libs.androidx.room.runtime)
