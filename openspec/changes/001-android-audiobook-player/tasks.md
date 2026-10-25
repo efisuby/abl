@@ -2,11 +2,11 @@
 
 ## 1. Data and app shell
 
-- [ ] 1.1 Define the Room schema (`books`, `chapters`, `progress`, `bookmarks`) and DAOs; verify with an instrumented test on an in-memory database: inserting a book with chapters returns them in `index` order
-- [ ] 1.2 Implement `AppContainer` and initialization in `AblApplication`; verify that `./gradlew :app:assembleDebug` passes and the app starts without crashes
-- [ ] 1.3 Wire DataStore Preferences with an explicit list of syncable keys; verify with a unit test that a setting outside the list does not enter the syncable set
-- [ ] 1.4 Implement library and progress repositories over Room; verify with unit tests: saving a position updates `updatedAt`, deleting a book removes its chapters and bookmarks
-- [ ] 1.5 Add `dataExtractionRules` excluding downloaded audio from backup; verify with `adb shell bmgr backupnow` on a debug build that the backup size does not grow with audio
+- [x] 1.1 Define the Room schema (`books`, `chapters`, `progress`, `bookmarks`) and DAOs; verify with an instrumented test on an in-memory database: inserting a book with chapters returns them in `index` order
+- [x] 1.2 Implement `AppContainer` and initialization in `AblApplication`; verify that `./gradlew :app:assembleDebug` passes and the app starts without crashes
+- [x] 1.3 Wire DataStore Preferences with an explicit list of syncable keys; verify with a unit test that a setting outside the list does not enter the syncable set
+- [x] 1.4 Implement library and progress repositories over Room; verify with instrumented tests: saving a position updates `updatedAt`, deleting a book removes its chapters and bookmarks
+- [x] 1.5 Add `dataExtractionRules` excluding downloaded audio from backup; verify with `adb shell bmgr backupnow` on a debug build that the backup size does not grow with audio
 
 ## 2. Local import and metadata
 
