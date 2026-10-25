@@ -1,87 +1,87 @@
 # Tasks
 
-## 1. Данные и каркас приложения
+## 1. Data and app shell
 
-- [ ] 1.1 Описать Room-схему (`books`, `chapters`, `progress`, `bookmarks`) и DAO; проверить instrumented-тестом на in-memory базе: вставка книги с главами возвращает их в порядке `index`
-- [ ] 1.2 Реализовать `AppContainer` и инициализацию в `AblApplication`; проверить, что `./gradlew :app:assembleDebug` проходит и приложение запускается без падений
-- [ ] 1.3 Подключить DataStore Preferences с явным списком синхронизируемых ключей; проверить unit-тестом, что настройка вне списка не попадает в синхронизируемый набор
-- [ ] 1.4 Реализовать репозитории библиотеки и прогресса поверх Room; проверить unit-тестами: сохранение позиции обновляет `updatedAt`, удаление книги удаляет главы и закладки
-- [ ] 1.5 Добавить `dataExtractionRules`, исключающие скачанное аудио из бэкапа; проверить через `adb shell bmgr backupnow` в debug-сборке, что размер бэкапа не растёт от аудио
+- [ ] 1.1 Define the Room schema (`books`, `chapters`, `progress`, `bookmarks`) and DAOs; verify with an instrumented test on an in-memory database: inserting a book with chapters returns them in `index` order
+- [ ] 1.2 Implement `AppContainer` and initialization in `AblApplication`; verify that `./gradlew :app:assembleDebug` passes and the app starts without crashes
+- [ ] 1.3 Wire DataStore Preferences with an explicit list of syncable keys; verify with a unit test that a setting outside the list does not enter the syncable set
+- [ ] 1.4 Implement library and progress repositories over Room; verify with unit tests: saving a position updates `updatedAt`, deleting a book removes its chapters and bookmarks
+- [ ] 1.5 Add `dataExtractionRules` excluding downloaded audio from backup; verify with `adb shell bmgr backupnow` on a debug build that the backup size does not grow with audio
 
-## 2. Импорт локальных книг и метаданные
+## 2. Local import and metadata
 
-- [ ] 2.1 Реализовать выбор папки и файла через SAF (`OpenDocumentTree`, `OpenDocument`); проверить instrumented-тестом с фикстурой: выбрана папка с 3 mp3 — создаётся одна книга с 3 главами
-- [ ] 2.2 Реализовать копирование в `filesDir/books/<bookId>` через `.part` и запись `book.json`; проверить unit-тестом сериализации манифеста и ручной проверкой, что после отмены копирования `.part` удалён
-- [ ] 2.3 Реализовать извлечение метаданных и обложки (`MediaMetadataRetriever`) с fallback на имя папки; проверить unit-тестами на трёх фикстурах: полные теги, частичные теги, без тегов
-- [ ] 2.4 Провести спайк по главам m4b и реализовать каскад `MediaMetadata.chapters` → `chpl` → chapter track → одна глава; проверить отчётом `docs/spikes/m4b-chapters.md` и unit-тестами на извлечённых границах
-- [ ] 2.5 Реализовать обход вложенных папок и упорядочивание глав по путям; проверить unit-тестом: порядок `часть-1/02.mp3`, `часть-1/01.mp3`, `часть-2/01.mp3` — главы идут 1, 2, 3
-- [ ] 2.6 Сделать экран импорта с прогрессом копирования и ошибками; проверить instrumented-тестом: импорт папки показывает прогресс и завершается открытием экрана книги
+- [ ] 2.1 Implement folder and file picking through SAF (`OpenDocumentTree`, `OpenDocument`); verify with an instrumented test on a fixture: a picked folder with 3 mp3 files creates one book with 3 chapters
+- [ ] 2.2 Implement copying into `filesDir/books/<bookId>` through `.part` and writing `book.json`; verify with a unit test of manifest serialization and manually that a cancelled copy leaves no `.part`
+- [ ] 2.3 Implement metadata and cover extraction (`MediaMetadataRetriever`) with a fallback to the folder name; verify with unit tests on three fixtures: full tags, partial tags, no tags
+- [ ] 2.4 Run the m4b chapter spike and implement the cascade `MediaMetadata.chapters` → `chpl` → chapter track → single chapter; verify with the `docs/spikes/m4b-chapters.md` report and unit tests on extracted boundaries
+- [ ] 2.5 Implement nested folder traversal and chapter ordering by path; verify with a unit test: `part-1/02.mp3`, `part-1/01.mp3`, `part-2/01.mp3` become chapters 1, 2, 3
+- [ ] 2.6 Build the import screen with copy progress and errors; verify with an instrumented test: importing a folder shows progress and finishes by opening the book screen
 
-## 3. Плеер
+## 3. Player
 
-- [ ] 3.1 Подключить ExoPlayer в `MediaSessionService` и публиковать уведомление с обложкой и главой; проверить вручную: воспроизведение продолжается при свёрнутом приложении и заблокированном экране
-- [ ] 3.2 Реализовать построение очереди глав (отдельные `MediaItem` для mp3, `ClippingConfiguration` для m4b); проверить instrumented-тестом: по завершении главы 1 автоматически начинается глава 2 в обоих форматах
-- [ ] 3.3 Сделать экран плеера с паузой, seek ±15 с, переходом по главам и перетаскиванием прогресса; проверить UI-тестом: нажатие «назад 15» сдвигает позицию на 15 с
-- [ ] 3.4 Реализовать изменение скорости 0.5–3.0× с сохранением в настройках; проверить unit-тестом сохранения и вручную: после перезапуска скорость та же
-- [ ] 3.5 Реализовать таймер сна (5/10/15/30/45/60 минут и «до конца главы»); проверить instrumented-тестом с подменёнными часами: по истечении воспроизведение на паузе
-- [ ] 3.6 Реализовать автосохранение позиции каждые 5 секунд, при паузе, уходе в фон и завершении главы; проверить unit-тестом: после `kill` процесса позиция отличается не более чем на 5 секунд
-- [ ] 3.7 Добавить карточку «Продолжить прослушивание» на главный экран; проверить UI-тестом: карточка показывает последнюю книгу и открывает плеер на сохранённой позиции
-- [ ] 3.8 Реализовать закладки: создание в текущей позиции, список, переход, удаление; проверить DAO-тестом и UI-тестом перехода по закладке
-- [ ] 3.9 Реализовать запрос `POST_NOTIFICATIONS` перед первым фоновым воспроизведением; проверить вручную сценарий отказа: воспроизведение работает, уведомления нет, падения нет
+- [ ] 3.1 Wire ExoPlayer inside `MediaSessionService` and publish a notification with the cover and chapter; verify manually: playback continues with the app in the background and the screen locked
+- [ ] 3.2 Implement chapter queue building (separate `MediaItem`s for mp3, `ClippingConfiguration` for m4b); verify with an instrumented test: when chapter 1 ends, chapter 2 starts automatically in both formats
+- [ ] 3.3 Build the player screen with pause, ±15 s seek, chapter navigation and progress dragging; verify with a UI test: tapping "back 15" moves the position by 15 s
+- [ ] 3.4 Implement speed change in the 0.5–3.0× range with persistence in settings; verify with a unit test of persistence and manually that the speed is the same after a restart
+- [ ] 3.5 Implement the sleep timer (5/10/15/30/45/60 minutes and "until end of chapter"); verify with an instrumented test using a fake clock: when it expires, playback is paused
+- [ ] 3.6 Implement position autosave every 5 seconds, on pause, on going to the background and at chapter end; verify with a unit test: after a process `kill` the position differs by no more than 5 seconds
+- [ ] 3.7 Add the "Continue listening" card to the home screen; verify with a UI test: the card shows the last book and opens the player at the saved position
+- [ ] 3.8 Implement bookmarks: creation at the current position, list, jump, deletion; verify with a DAO test and a UI test of jumping to a bookmark
+- [ ] 3.9 Implement the `POST_NOTIFICATIONS` request before the first background playback; verify the denial scenario manually: playback works, no notification, no crash
 
-## 4. Библиотека
+## 4. Library
 
-- [ ] 4.1 Сделать главный экран со списком книг (обложка, автор, статус, прогресс); проверить UI-тестом на трёх книгах с разными статусами
-- [ ] 4.2 Сделать экран книги с обложкой, метаданными, списком глав и закладками; проверить UI-тестом: нажатие главы запускает её воспроизведение
-- [ ] 4.3 Реализовать поиск по названию, автору и серии, фильтры по статусу и источнику, сортировки; проверить unit-тестами запросов DAO на наборе из 10 книг
-- [ ] 4.4 Реализовать группировку по сериям и порядок внутри серии; проверить unit-тестом: книги с номерами 2, 1, 3 отображаются как 1, 2, 3
-- [ ] 4.5 Реализовать редактирование метаданных и выбор обложки; проверить UI-тестом: после сохранения новое название видно в списке и на экране книги
-- [ ] 4.6 Реализовать удаление книги с подтверждением и очисткой каталога; проверить unit-тестом: после удаления каталог книги отсутствует, а запись пропадает из БД
-- [ ] 4.7 Добавить пустые состояния для библиотеки и поиска; проверить UI-тестом: при пустой библиотеке видна подсказка об импорте
+- [ ] 4.1 Build the home screen with the book list (cover, author, status, progress); verify with a UI test on three books with different statuses
+- [ ] 4.2 Build the book screen with cover, metadata, chapter list and bookmarks; verify with a UI test: tapping a chapter starts its playback
+- [ ] 4.3 Implement search by title, author and series, filters by status and source, and sorting; verify with unit tests of DAO queries on a set of 10 books
+- [ ] 4.4 Implement series grouping and ordering within a series; verify with a unit test: books numbered 2, 1, 3 are shown as 1, 2, 3
+- [ ] 4.5 Implement metadata editing and cover picking; verify with a UI test: after saving, the new title is visible in the list and on the book screen
+- [ ] 4.6 Implement book deletion with confirmation and directory cleanup; verify with a unit test: after deletion the book directory is gone and the record disappears from the database
+- [ ] 4.7 Add empty states for the library and search; verify with a UI test: with an empty library an import hint is visible
 
-## 5. Настройки, тема, локализация
+## 5. Settings, theme, localization
 
-- [ ] 5.1 Реализовать светлую, тёмную и системную тему с мгновенным применением; проверить instrumented-тестом: переключение темы меняет тему активности без перезапуска
-- [ ] 5.2 Вынести все строки в `values/strings.xml` и `values-en/strings.xml`; проверить сборкой с `-Pandroid.testInstrumentationRunnerArguments` и ручной проверкой обоих языков
-- [ ] 5.3 Сделать экран настроек: тема, язык, «только Wi-Fi», хранилище, синхронизация, выход; проверить UI-тестом: все элементы доступны и вызывают ожидаемые действия
+- [ ] 5.1 Implement the light, dark and system theme with immediate application; verify with an instrumented test: switching the theme changes the activity theme without a restart
+- [ ] 5.2 Move all strings into `values/strings.xml` and `values-en/strings.xml`; verify with a build using `-Pandroid.testInstrumentationRunnerArguments` and a manual check of both languages
+- [ ] 5.3 Build the settings screen: theme, language, "Wi-Fi only", storage, synchronization, sign-out; verify with a UI test: all elements are reachable and trigger the expected actions
 
-## 6. Яндекс.Диск: авторизация
+## 6. Yandex Disk: authorization
 
-- [ ] 6.1 Подключить Yandex ID SDK и сделать экран входа с обработкой `Success`, `Failure`, `Cancelled`; проверить вручную на устройстве: успешный вход открывает облачный раздел, отмена возвращает на экран
-- [ ] 6.2 Реализовать шифрованное хранение токена ключом Android Keystore; проверить unit-тестом: после записи и чтения токен совпадает, а в файле нет открытой строки токена
-- [ ] 6.3 Реализовать выход из аккаунта и обработку 401; проверить unit-тестом клиента: 401 переводит состояние в «требуется вход», локальные книги остаются
-- [ ] 6.4 Проверить авторизацию на реальном аккаунте и убедиться, что группа прав `cloud_api` доступна; при недоступности зафиксировать переход на тип приложения «Для доступа к API» в `design.md`
+- [ ] 6.1 Wire the Yandex ID SDK and build the sign-in screen handling `Success`, `Failure`, `Cancelled`; verify manually on the device: a successful sign-in opens the cloud section, cancellation returns to the screen
+- [ ] 6.2 Implement encrypted token storage with an Android Keystore key; verify with a unit test: the token reads back identical after writing, and the file contains no plaintext token
+- [ ] 6.3 Implement sign-out and 401 handling; verify with a client unit test: 401 moves the state to "sign-in required" while local books remain
+- [ ] 6.4 Verify authorization on a real account and confirm that the `cloud_api` permission group is available; if it is not, record the switch to the "For API access" app type in `design.md`
 
-## 7. Яндекс.Диск: браузер и загрузки
+## 7. Yandex Disk: browser and downloads
 
-- [ ] 7.1 Реализовать REST-клиент (`/v1/disk/resources`, `download`, `upload`) с моделями и обработкой 401/404/429; проверить тестами на MockWebServer, включая повтор после 429
-- [ ] 7.2 Сделать браузер облачной папки с ленивой загрузкой уровней; проверить UI-тестом на моке: переход внутрь папки запрашивает только её содержимое
-- [ ] 7.3 Реализовать импорт облачной книги: создание записи, определение формата, постановка загрузки в очередь; проверить unit-тестом: `bookId` двух импортов одного пути совпадает
-- [ ] 7.4 Реализовать worker загрузки с докачкой `Range`, проверкой `md5` и foreground-уведомлением `dataSync`; проверить тестом на MockWebServer: обрыв на середине продолжается с того же байта
-- [ ] 7.5 Реализовать ограничение «только Wi-Fi», отмену и повтор загрузки; проверить unit-тестом: при мобильной сети задача не стартует, после отмены `.part` удалён
-- [ ] 7.6 Показывать офлайн-состояния книги и блокировать воспроизведение незагруженной книги; проверить UI-тестом: нажатие play у книги «в облаке» открывает предложение скачать
-- [ ] 7.7 Реализовать управление хранилищем: размеры книг, суммарный объём, удаление загрузок, проверка свободного места; проверить unit-тестом расчёта размера и вручную — предупреждение при нехватке места
+- [ ] 7.1 Implement the REST client (`/v1/disk/resources`, `download`, `upload`) with models and 401/404/429 handling; verify with MockWebServer tests, including retry after 429
+- [ ] 7.2 Build the cloud folder browser with lazy level loading; verify with a UI test on a mock: navigating into a folder requests only its contents
+- [ ] 7.3 Implement cloud book import: creating the record, detecting the format, queueing the download; verify with a unit test: `bookId` is the same for two imports of the same path
+- [ ] 7.4 Implement the download worker with `Range` resume, `md5` verification and a `dataSync` foreground notification; verify with a MockWebServer test: an interruption mid-way continues from the same byte
+- [ ] 7.5 Implement the "Wi-Fi only" constraint, cancellation and retry; verify with a unit test: on a mobile connection the job does not start, and after cancellation the `.part` is removed
+- [ ] 7.6 Show offline book states and block playback of a book that is not downloaded; verify with a UI test: tapping play on a book "in the cloud" opens the download offer
+- [ ] 7.7 Implement storage management: book sizes, total volume, deleting downloads, free-space check; verify with a unit test of the size calculation and manually the low-space warning
 
-## 8. Синхронизация
+## 8. Synchronization
 
-- [ ] 8.1 Реализовать `deviceId`, формат JSON-файлов и поле `schemaVersion`; проверить unit-тестом: повторная сериализация даёт идентичный документ
-- [ ] 8.2 Реализовать выгрузку и слияние прогресса по всем `progress/*.json`; проверить unit-тестами: две позиции — побеждает более свежая, при равном времени срабатывает тай-брейк
-- [ ] 8.3 Реализовать синхронизацию закладок с union и tombstone; проверить unit-тестом: удалённая закладка не восстанавливается после слияния со старой копией
-- [ ] 8.4 Реализовать синхронизацию метаданных и обложек; проверить unit-тестом: изменённая обложка скачивается на «другое устройство» (эмуляция вторым каталогом)
-- [ ] 8.5 Реализовать LWW по ключам настроек и исключение устройство-зависимых; проверить unit-тестом: скорость синхронизируется, «только Wi-Fi» — нет
-- [ ] 8.6 Реализовать триггеры синхронизации: старт, выход из плеера, появление сети, ручной запуск; проверить instrumented-тестом: событие плеера запускает синхронизацию один раз
-- [ ] 8.7 Реализовать локальную очередь изменений и повтор с backoff при офлайне; проверить unit-тестом: изменения, сделанные офлайн, уходят после восстановления сети
-- [ ] 8.8 Реализовать восстановление библиотеки после переустановки из `library.json` с предложением докачать аудио; проверить вручную: очистка данных приложения и вход восстанавливают список и позиции
+- [ ] 8.1 Implement `deviceId`, the JSON file format and the `schemaVersion` field; verify with a unit test: re-serializing produces an identical document
+- [ ] 8.2 Implement progress upload and merging across all `progress/*.json`; verify with unit tests: with two positions the fresher one wins, and a tie triggers the tie-break
+- [ ] 8.3 Implement bookmark synchronization with union and tombstones; verify with a unit test: a deleted bookmark is not restored after merging with an old copy
+- [ ] 8.4 Implement metadata and cover synchronization; verify with a unit test: a changed cover is downloaded to the "other device" (emulated with a second directory)
+- [ ] 8.5 Implement LWW per settings key and the exclusion of device-specific keys; verify with a unit test: speed is synchronized, "Wi-Fi only" is not
+- [ ] 8.6 Implement synchronization triggers: launch, leaving the player, network appearance, manual start; verify with an instrumented test: a player event starts synchronization exactly once
+- [ ] 8.7 Implement a local change queue and retry with backoff while offline; verify with a unit test: changes made offline are sent after the network returns
+- [ ] 8.8 Implement library restoration after reinstall from `library.json` with an offer to re-download audio; verify manually: clearing app data and signing in restores the list and positions
 
-## 9. Интеграция и проверка
+## 9. Integration and verification
 
-- [ ] 9.1 Пройти end-to-end сценарий на физическом устройстве: вход, импорт книги с Диска, прослушивание с блокировкой экрана, закладка, смена устройства и проверка прогресса
-- [ ] 9.2 Собрать release с R8 и проверить сериализацию, шифрование токена и воспроизведение в релизной сборке
-- [ ] 9.3 Добиться отсутствия предупреждений `./gradlew :app:lintDebug` и пройти `openspec validate --strict`
-- [ ] 9.4 Обновить `README.md` (экраны, сценарии, ограничения) и `docs/spikes/m4b-chapters.md`
-- [ ] 9.5 Прогнать все unit- и instrumented-тесты одной командой и зафиксировать результат
+- [ ] 9.1 Walk the end-to-end scenario on a physical device: sign-in, importing a book from Disk, listening with the screen locked, adding a bookmark, switching devices and checking progress
+- [ ] 9.2 Build release with R8 and verify serialization, token encryption and playback in the release build
+- [ ] 9.3 Reach zero warnings from `./gradlew :app:lintDebug` and pass `openspec validate --strict`
+- [ ] 9.4 Update `README.md` (screens, scenarios, limitations) and `docs/spikes/m4b-chapters.md`
+- [ ] 9.5 Run all unit and instrumented tests with a single command and record the result
 
 ## Workflow follow-up
 
-- Архивировать изменение после выполнения всех задач и успешного end-to-end прогона.
-- Проверить, что `openspec/specs/` после архивации содержит все пять capability без placeholder-целей.
+- Archive the change after all tasks are done and the end-to-end run passes.
+- Verify that after archiving `openspec/specs/` contains all five capabilities without placeholder purposes.

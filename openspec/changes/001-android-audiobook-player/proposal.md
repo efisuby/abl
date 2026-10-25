@@ -1,39 +1,39 @@
-# Изменение 001: ABL — плеер аудиокниг с библиотекой на Яндекс.Диске
+# Change 001: ABL — audiobook player with a Yandex Disk library
 
 ## Why
 
-В репозитории есть только пустой Android-каркас, который показывает заглушку. Нужен личный плеер аудиокниг: книги лежат в облаке, скачиваются для офлайн-прослушивания, а прогресс, закладки и настройки переносятся между устройствами. Готовые плееры не дают связки «Яндекс.Диск + синхронизация позиции + свои форматы», поэтому приложение пишется под себя.
+The repository currently holds only an empty Android scaffold that renders a placeholder. It needs a personal audiobook player: books live in the cloud, are downloaded for offline listening, and progress, bookmarks and settings move between devices. Off-the-shelf players do not combine Yandex Disk, position sync and these file formats, so the app is built for personal use.
 
 ## What Changes
 
-- Импорт книг из локальных файлов: папка с mp3 (глава = файл) или один m4b/m4a с встроенными главами.
-- Плеер на Media3: главы, перемотка, скорость 0.5–3.0×, таймер сна, фоновое воспроизведение с уведомлением, автопродолжение с последней позиции.
-- Библиотека: обложки и метаданные, поиск, сортировки, статусы, серии, закладки с таймкодом, ручное редактирование.
-- Яндекс.Диск как источник книг: вход через Яндекс ID, просмотр фиксированной папки приложения, очередь загрузок с докачкой, офлайн-состояния, управление занятым местом.
-- Синхронизация через Диск: прогресс, закладки, метаданные с обложками, выбранные настройки; разрешение конфликтов между устройствами.
-- База приложения: тема (светлая/тёмная/системная), локализация ru/en, экран настроек.
-- **BREAKING** для ранее установленной заглушки: `applicationId` меняется на `com.efisuby.abl`, поэтому обновление поверх неё невозможно — старое приложение нужно удалить.
+- Import books from local files: a folder of mp3 (chapter = file) or a single m4b/m4a with embedded chapters.
+- Media3 player: chapters, seeking, 0.5–3.0× speed, sleep timer, background playback with a notification, resume from the last position.
+- Library: covers and metadata, search, sorting, statuses, series, timecoded bookmarks, manual editing.
+- Yandex Disk as the book source: Yandex ID sign-in, browsing the app's fixed folder, a download queue with resume, offline states, storage management.
+- Sync through Disk: progress, bookmarks, metadata with covers, selected settings; conflict resolution between devices.
+- App basics: theme (light/dark/system), ru/en localization, settings screen.
+- **BREAKING** for the previously installed placeholder: `applicationId` changes to `com.efisuby.abl`, so it cannot be updated in place and must be uninstalled first.
 
-Аудиофайлы на Диске приложение только читает: загрузка, переименование и удаление книг в облаке не выполняются.
+The app only reads audio files on Disk: it never uploads, renames or deletes books in the cloud.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `library`: коллекция книг — импорт из локальных файлов, извлечение и редактирование метаданных и обложек, серии, статусы, поиск, фильтрация, сортировка, удаление с устройства.
-- `playback`: воспроизведение по главам, управление, скорость, таймер сна, сохранение и восстановление позиции, фоновое воспроизведение, закладки.
-- `yandex-disk`: авторизация через Яндекс ID, просмотр папки книг в облаке, импорт и загрузка книг, офлайн-состояния, управление хранилищем.
-- `sync`: обмен прогрессом, закладками, метаданными и настройками через Яндекс.Диск, разрешение конфликтов, восстановление после переустановки.
-- `app-shell`: тема, локализация, разрешение на уведомления, экран настроек.
+- `library`: the book collection — import from local files, metadata and cover extraction and editing, series, statuses, search, filtering, sorting, removal from the device.
+- `playback`: chapter playback, playback controls, speed, sleep timer, position saving and restoring, background playback, bookmarks.
+- `yandex-disk`: Yandex ID authorization, browsing the cloud book folder, importing and downloading books, offline states, storage management.
+- `sync`: exchange of progress, bookmarks, metadata and settings through Yandex Disk, conflict resolution, restoration after reinstall.
+- `app-shell`: theme, localization, notification permission, settings screen.
 
 ### Modified Capabilities
 
-Нет: проект создаётся с нуля, существующих спецификаций нет.
+None: the project is new and no existing specifications exist.
 
 ## Impact
 
-- `android/app`: весь код приложения — данные (Room, DataStore), сеть (Яндекс.Диск REST), плеер (Media3), UI.
-- Новые зависимости: OkHttp, kotlinx.serialization, WorkManager, DataStore; уже подключены Media3, Room, Yandex ID SDK.
-- Внешние системы: OAuth-приложение Яндекса (пакет `com.efisuby.abl`, отпечаток ключа подписи, права `cloud_api:disk.read/write/info`), Яндекс.Диск как хранилище библиотеки.
-- Хранение: скачанные книги — в приватном каталоге приложения, поэтому переустановка требует повторной загрузки аудио; библиотека и прогресс восстанавливаются из облака.
-- Подпись: debug и release собираются одним ключом, чтобы отпечаток сертификата в OAuth-приложении не менялся.
+- `android/app`: all application code — data (Room, DataStore), network (Yandex Disk REST), player (Media3), UI.
+- New dependencies: OkHttp, kotlinx.serialization, WorkManager, DataStore; Media3, Room and the Yandex ID SDK are already wired.
+- External systems: Yandex OAuth application (package `com.efisuby.abl`, signing key fingerprint, `cloud_api:disk.read/write/info` scopes), Yandex Disk as the library storage.
+- Storage: downloaded books live in the app's private directory, so a reinstall requires downloading the audio again; the library and progress are restored from the cloud.
+- Signing: debug and release builds share one key so the certificate fingerprint registered in the OAuth application never changes.

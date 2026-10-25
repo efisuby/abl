@@ -2,83 +2,83 @@
 
 ## Purpose
 
-Синхронизирует прогресс прослушивания, закладки, метаданные книг и выбранные настройки между устройствами через Яндекс.Диск, разрешает конфликты и восстанавливает библиотеку после переустановки.
+Synchronizes listening progress, bookmarks, book metadata and selected settings between devices through Yandex Disk, resolves conflicts and restores the library after a reinstall.
 
 ## ADDED Requirements
 
-### Requirement: Синхронизация прогресса
+### Requirement: Progress synchronization
 
-Приложение MUST передавать в облако позицию прослушивания каждой книги (глава, смещение, суммарное время) и при получении выбирать наиболее свежее значение, не теряя более новую локальную позицию.
+The app MUST upload each book's listening position to the cloud (chapter, offset, total time) and MUST pick the freshest value when receiving, without losing a newer local position.
 
-#### Scenario: Прогресс с другого устройства
+#### Scenario: Progress from another device
 
-- **WHEN** книга слушалась на телефоне до 2:10:00, а на планшете до 0:30:00, и планшет синхронизируется
-- **THEN** на планшете появляется позиция 2:10:00
+- **WHEN** a book was played to 2:10:00 on the phone and to 0:30:00 on the tablet, and the tablet synchronizes
+- **THEN** the tablet shows position 2:10:00
 
-### Requirement: Разрешение конфликтов
+### Requirement: Conflict resolution
 
-При одновременном изменении одних и тех же данных на нескольких устройствах приложение MUST сохранять обе версии там, где возможен union (закладки), и выбирать более свежую по времени изменения там, где union невозможен (позиция, настройки).
+When the same data is changed on several devices at once, the app MUST keep both versions where a union is possible (bookmarks) and MUST choose the most recently modified version where a union is not possible (position, settings).
 
-#### Scenario: Одновременное прослушивание
+#### Scenario: Simultaneous listening
 
-- **WHEN** два устройства слушают одну книгу офлайн и затем выходят в сеть
-- **THEN** сохраняется позиция с более поздним временем изменения, вторая позиция не блокирует синхронизацию
+- **WHEN** two devices listen to the same book offline and then come online
+- **THEN** the position with the later modification time is kept and the other position does not block synchronization
 
-### Requirement: Синхронизация закладок
+### Requirement: Bookmark synchronization
 
-Закладки MUST синхронизироваться между устройствами: созданная на одном устройстве закладка появляется на других, а удалённая не восстанавливается при следующем обмене.
+Bookmarks MUST be synchronized between devices: a bookmark created on one device appears on the others, and a deleted one is not restored during the next exchange.
 
-#### Scenario: Удаление не воскресает
+#### Scenario: Deletion does not resurrect
 
-- **WHEN** пользователь удалил закладку на телефоне и синхронизировал, а на планшете осталась старая копия
-- **THEN** после синхронизации закладка отсутствует на обоих устройствах
+- **WHEN** the user deletes a bookmark on the phone and synchronizes, while the tablet still holds an old copy
+- **THEN** after synchronization the bookmark is absent on both devices
 
-### Requirement: Синхронизация метаданных и обложек
+### Requirement: Metadata and cover synchronization
 
-Изменённые вручную название, автор, чтец, серия, номер в серии и обложка MUST передаваться между устройствами.
+Manually changed title, author, narrator, series, series number and cover MUST be transferred between devices.
 
-#### Scenario: Правка метаданных
+#### Scenario: Editing metadata
 
-- **WHEN** пользователь меняет обложку книги на телефоне
-- **THEN** после синхронизации на планшете отображается новая обложка
+- **WHEN** the user changes a book cover on the phone
+- **THEN** after synchronization the tablet shows the new cover
 
-### Requirement: Синхронизация настроек
+### Requirement: Settings synchronization
 
-Приложение MUST синхронизировать только настройки прослушивания и оформления (скорость, тема, язык). Настройки, зависящие от устройства, включая ограничение загрузок по Wi-Fi и параметры хранилища, синхронизироваться не MUST.
+The app MUST synchronize only listening and appearance settings (speed, theme, language). Device-specific settings, including the Wi-Fi-only download constraint and storage parameters, MUST NOT be synchronized.
 
-#### Scenario: Скорость на втором устройстве
+#### Scenario: Speed on the second device
 
-- **WHEN** пользователь установил скорость 1.25× и она синхронизировалась
-- **THEN** на другом устройстве новая сессия начинается со скоростью 1.25×
+- **WHEN** the user sets speed 1.25× and it is synchronized
+- **THEN** on the other device a new session starts at 1.25×
 
-#### Scenario: Сетевое ограничение не переносится
+#### Scenario: Network constraint is not transferred
 
-- **WHEN** на телефоне включено «скачивать только по Wi-Fi»
-- **THEN** на планшете эта настройка не меняется
+- **WHEN** "download over Wi-Fi only" is enabled on the phone
+- **THEN** that setting does not change on the tablet
 
-### Requirement: Автоматическая синхронизация
+### Requirement: Automatic synchronization
 
-Приложение MUST синхронизироваться при запуске, при выходе из плеера, при появлении сети и по ручному запросу, не блокируя интерфейс.
+The app MUST synchronize on launch, on leaving the player, when the network appears and on manual request, without blocking the interface.
 
-#### Scenario: Ручная синхронизация
+#### Scenario: Manual synchronization
 
-- **WHEN** пользователь нажимает «Синхронизировать»
-- **THEN** обмен выполняется в фоне, а результат показывается по завершении
+- **WHEN** the user taps "Synchronize"
+- **THEN** the exchange runs in the background and the result is shown when it finishes
 
-### Requirement: Устойчивость к офлайну
+### Requirement: Offline durability
 
-Изменения, сделанные без сети, MUST сохраняться локально и отправляться при следующей успешной синхронизации, не теряясь при перезапуске приложения.
+Changes made without a network MUST be stored locally and sent on the next successful synchronization, and MUST NOT be lost when the app restarts.
 
-#### Scenario: Долгое отсутствие сети
+#### Scenario: Long offline period
 
-- **WHEN** пользователь слушает книгу неделю без интернета
-- **THEN** после подключения в облако уходит актуальная позиция и все закладки
+- **WHEN** the user listens to a book for a week without internet
+- **THEN** after reconnecting the current position and all bookmarks are uploaded to the cloud
 
-### Requirement: Восстановление после переустановки
+### Requirement: Restore after reinstall
 
-После переустановки приложения и входа в аккаунт библиотека, прогресс и закладки MUST восстановиться из облака, а для книг без локальных файлов приложение MUST предложить повторную загрузку.
+After reinstalling the app and signing in, the library, progress and bookmarks MUST be restored from the cloud, and for books without local files the app MUST offer to download them again.
 
-#### Scenario: Переустановка
+#### Scenario: Reinstall
 
-- **WHEN** пользователь установил приложение заново и вошёл в аккаунт
-- **THEN** список книг и позиции восстановлены, у книг видно предложение скачать аудио
+- **WHEN** the user installs the app again and signs in
+- **THEN** the book list and positions are restored, and books show a prompt to download the audio

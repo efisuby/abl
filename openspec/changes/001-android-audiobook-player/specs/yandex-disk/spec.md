@@ -2,102 +2,102 @@
 
 ## Purpose
 
-Даёт доступ к аудиокнигам, лежащим в Яндекс.Диске: авторизация, просмотр папки книг, загрузка на устройство и управление занятым местом. Аудио в облаке доступно только для чтения.
+Provides access to audiobooks stored in Yandex Disk: authorization, browsing the book folder, downloading to the device and managing occupied space. Cloud audio is read-only.
 
 ## ADDED Requirements
 
-### Requirement: Вход через Яндекс ID
+### Requirement: Yandex ID sign-in
 
-Пользователь MUST иметь возможность войти в аккаунт Яндекса и выйти из него. Токен доступа хранится на устройстве в защищённом виде и не попадает в резервные копии и логи.
+The user MUST be able to sign in to a Yandex account and sign out. The access token is stored on the device in protected form and MUST NOT appear in backups or logs.
 
-#### Scenario: Успешный вход
+#### Scenario: Successful sign-in
 
-- **WHEN** пользователь проходит авторизацию в Яндекс ID
-- **THEN** приложение получает токен и показывает содержимое папки книг
+- **WHEN** the user completes authorization in Yandex ID
+- **THEN** the app receives a token and shows the contents of the book folder
 
-#### Scenario: Выход из аккаунта
+#### Scenario: Signing out
 
-- **WHEN** пользователь нажимает «Выйти»
-- **THEN** токен удаляется с устройства, а облачный раздел становится недоступен
+- **WHEN** the user taps "Sign out"
+- **THEN** the token is removed from the device and the cloud section becomes unavailable
 
-### Requirement: Истёкший токен
+### Requirement: Expired token
 
-Если токен отклонён сервером, приложение MUST показать требование повторного входа и не терять локальную библиотеку и прогресс.
+If the server rejects the token, the app MUST ask the user to sign in again and MUST NOT lose the local library or progress.
 
-#### Scenario: Токен истёк
+#### Scenario: Token expired
 
-- **WHEN** запрос к API возвращает 401
-- **THEN** приложение просит войти заново, локальные книги остаются доступными
+- **WHEN** an API request returns 401
+- **THEN** the app asks the user to sign in again and local books stay available
 
-### Requirement: Просмотр папки книг
+### Requirement: Browsing the book folder
 
-Приложение MUST показывать содержимое фиксированной папки приложения в облаке, подгружая уровни дерева по мере навигации, и различать папки и файлы.
+The app MUST show the contents of the app's fixed folder in the cloud, loading tree levels as the user navigates, and MUST distinguish folders from files.
 
-#### Scenario: Навигация по дереву
+#### Scenario: Navigating the tree
 
-- **WHEN** пользователь открывает папку с книгами
-- **THEN** отображаются вложенные папки и поддерживаемые аудиофайлы текущего уровня
+- **WHEN** the user opens the books folder
+- **THEN** the nested folders and supported audio files of the current level are shown
 
-#### Scenario: Пустая папка
+#### Scenario: Empty folder
 
-- **WHEN** в папке нет книг
-- **THEN** приложение показывает подсказку, как добавить книги через веб-интерфейс Диска
+- **WHEN** the folder contains no books
+- **THEN** the app shows a hint on how to add books through the Disk web interface
 
-### Requirement: Импорт книги из облака
+### Requirement: Importing a book from the cloud
 
-Пользователь MUST иметь возможность добавить книгу из облака: папку с аудиофайлами или отдельный m4b/m4a. Книга появляется в библиотеке сразу, а аудио загружается в фоне.
+The user MUST be able to add a book from the cloud: either a folder with audio files or a single m4b/m4a. The book appears in the library immediately, while the audio downloads in the background.
 
-#### Scenario: Импорт папки
+#### Scenario: Importing a folder
 
-- **WHEN** пользователь выбирает облачную папку с 30 mp3 и нажимает «Скачать»
-- **THEN** книга появляется в библиотеке с 30 главами и статусом «загружается»
+- **WHEN** the user picks a cloud folder with 30 mp3 files and taps "Download"
+- **THEN** the book appears in the library with 30 chapters and the "downloading" state
 
-### Requirement: Очередь загрузок
+### Requirement: Download queue
 
-Приложение MUST загружать книги в фоне через планировщик задач, продолжать прерванную загрузку с места обрыва, ограничивать число одновременных загрузок и показывать прогресс в уведомлении.
+The app MUST download books in the background through the job scheduler, resume an interrupted download from the break point, limit the number of concurrent downloads and show progress in a notification.
 
-#### Scenario: Обрыв соединения
+#### Scenario: Connection drops
 
-- **WHEN** соединение пропадает на 60% загрузки и восстанавливается
-- **THEN** загрузка продолжается с 60%, а не начинается заново
+- **WHEN** the connection is lost at 60% of a download and then restored
+- **THEN** the download continues from 60% instead of starting over
 
-#### Scenario: Отмена загрузки
+#### Scenario: Cancelling a download
 
-- **WHEN** пользователь отменяет загрузку книги
-- **THEN** задача останавливается, временные файлы удаляются, книга остаётся в состоянии «в облаке»
+- **WHEN** the user cancels a book download
+- **THEN** the job stops, temporary files are removed and the book returns to the "in the cloud" state
 
-### Requirement: Ограничение загрузок по сети
+### Requirement: Network constraint for downloads
 
-Пользователь MUST иметь возможность включить режим «скачивать только по Wi-Fi». При мобильном соединении задачи MUST ожидать Wi-Fi и не расходовать трафик.
+The user MUST be able to enable "download over Wi-Fi only". On a mobile connection, jobs MUST wait for Wi-Fi and MUST NOT consume traffic.
 
-#### Scenario: Мобильная сеть при включённом ограничении
+#### Scenario: Mobile connection with the constraint on
 
-- **WHEN** книга поставлена в очередь, а активное соединение — мобильное
-- **THEN** загрузка не начинается до подключения к Wi-Fi
+- **WHEN** a book is queued and the active connection is mobile
+- **THEN** the download does not start until Wi-Fi is available
 
-### Requirement: Офлайн-состояния книги
+### Requirement: Offline book states
 
-Приложение MUST показывать для каждой книги состояние «в облаке», «загружается», «частично загружено» или «скачано». Воспроизведение доступно только для полностью скачанных книг.
+The app MUST show one of the states "in the cloud", "downloading", "partially downloaded" or "downloaded" for every book. Playback MUST be available only for fully downloaded books.
 
-#### Scenario: Попытка воспроизведения незагруженной книги
+#### Scenario: Playing a book that is not downloaded
 
-- **WHEN** пользователь нажимает воспроизведение у книги в состоянии «в облаке»
-- **THEN** приложение предлагает скачать книгу и не начинает воспроизведение
+- **WHEN** the user taps play on a book in the "in the cloud" state
+- **THEN** the app offers to download the book and does not start playback
 
-### Requirement: Управление хранилищем
+### Requirement: Storage management
 
-Приложение MUST показывать размер каждой книги и суммарный объём скачанного, позволять удалять аудиофайлы отдельной книги и предупреждать, если для загрузки не хватает места.
+The app MUST show the size of each book and the total downloaded volume, MUST allow deleting the audio files of a single book, and MUST warn when there is not enough space for a download.
 
-#### Scenario: Нехватка места
+#### Scenario: Not enough space
 
-- **WHEN** для загрузки книги нужно 1.8 ГБ, а свободно 900 МБ
-- **THEN** загрузка не начинается, пользователь видит предупреждение и размер книги
+- **WHEN** a book needs 1.8 GB and 900 MB are free
+- **THEN** the download does not start and the user sees a warning with the book size
 
-### Requirement: Только чтение облака
+### Requirement: Cloud is read-only
 
-Приложение MUST изменять в облаке только собственные служебные файлы и MUST NOT изменять, переименовывать или удалять аудиофайлы и папки с книгами.
+The app MUST modify only its own service files in the cloud and MUST NOT modify, rename or delete audio files or book folders.
 
-#### Scenario: Удаление книги с устройства
+#### Scenario: Deleting a book from the device
 
-- **WHEN** пользователь удаляет скачанную книгу
-- **THEN** запрос на удаление к аудиофайлам в облаке не отправляется
+- **WHEN** the user deletes a downloaded book
+- **THEN** no delete request is sent to the audio files in the cloud

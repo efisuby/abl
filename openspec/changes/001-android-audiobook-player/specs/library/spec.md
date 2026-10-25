@@ -2,112 +2,112 @@
 
 ## Purpose
 
-Хранит коллекцию аудиокниг пользователя: импорт из локальных файлов, извлечение и редактирование метаданных и обложек, серии, статусы, поиск, фильтрация, сортировка и удаление с устройства.
+Holds the user's audiobook collection: import from local files, metadata and cover extraction and editing, series, statuses, search, filtering, sorting and removal from the device.
 
 ## ADDED Requirements
 
-### Requirement: Импорт книги из папки
+### Requirement: Import a book from a folder
 
-Пользователь MUST иметь возможность выбрать папку с аудиофайлами через системный файловый диалог. Приложение копирует файлы в приватное хранилище и создаёт одну книгу, где каждый аудиофайл становится главой.
+The user MUST be able to pick a folder of audio files through the system file picker. The app copies the files into private storage and creates a single book where each audio file becomes a chapter.
 
-#### Scenario: Папка с mp3-файлами
+#### Scenario: Folder with mp3 files
 
-- **WHEN** пользователь выбирает папку с 12 файлами mp3
-- **THEN** создаётся книга с 12 главами, упорядоченными по имени файла
+- **WHEN** the user picks a folder containing 12 mp3 files
+- **THEN** a book with 12 chapters ordered by file name is created
 
-#### Scenario: Папка без поддерживаемых файлов
+#### Scenario: Folder without supported files
 
-- **WHEN** в выбранной папке нет файлов mp3, m4a, m4b или aac
-- **THEN** приложение показывает сообщение об ошибке и не создаёт книгу
+- **WHEN** the picked folder contains no mp3, m4a, m4b or aac files
+- **THEN** the app shows an error and creates no book
 
-### Requirement: Импорт книги из файла
+### Requirement: Import a book from a file
 
-Пользователь MUST иметь возможность выбрать один файл m4b, m4a, mp3 или aac. Файл копируется в приватное хранилище и становится книгой, а главы берутся из встроенных метаданных файла.
+The user MUST be able to pick a single m4b, m4a, mp3 or aac file. The file is copied into private storage and becomes a book, with chapters taken from the file's embedded metadata.
 
-#### Scenario: M4B со встроенными главами
+#### Scenario: M4B with embedded chapters
 
-- **WHEN** пользователь импортирует m4b с 24 встроенными главами
-- **THEN** создаётся книга с 24 главами и границами, совпадающими с файлом
+- **WHEN** the user imports an m4b with 24 embedded chapters
+- **THEN** a book with 24 chapters is created and the chapter boundaries match the file
 
-#### Scenario: Файл без встроенных глав
+#### Scenario: File without embedded chapters
 
-- **WHEN** пользователь импортирует mp3 без встроенных глав
-- **THEN** создаётся книга с одной главой на весь файл
+- **WHEN** the user imports an mp3 without embedded chapters
+- **THEN** a book with one chapter covering the whole file is created
 
-### Requirement: Группировка многофайловых книг
+### Requirement: Multi-file book grouping
 
-Приложение MUST трактовать каждую выбранную папку как одну книгу, не объединять разные папки и обходить вложенные подпапки рекурсивно, сохраняя порядок файлов по именам.
+The app MUST treat each picked folder as one book, MUST NOT merge different folders, and MUST walk nested subfolders recursively while preserving file order by name.
 
-#### Scenario: Книга разложена по подпапкам
+#### Scenario: Book split into subfolders
 
-- **WHEN** внутри выбранной папки лежат подпапки «часть-1» и «часть-2» с аудиофайлами
-- **THEN** все файлы попадают в одну книгу, и главы идут в порядке имён путей
+- **WHEN** the picked folder contains subfolders `part-1` and `part-2` with audio files
+- **THEN** all files belong to one book and chapters follow path order
 
-### Requirement: Извлечение метаданных
+### Requirement: Metadata extraction
 
-Приложение MUST заполнять название, автора, чтеца, серию, номер в серии и обложку из тегов файлов (ID3 для mp3, MP4-теги для m4a и m4b), а при отсутствии тегов — из имён папки и файла.
+The app MUST fill title, author, narrator, series, series number and cover from file tags (ID3 for mp3, MP4 tags for m4a and m4b) and MUST fall back to folder and file names when tags are absent.
 
-#### Scenario: Теги заполнены
+#### Scenario: Tags are present
 
-- **WHEN** импортируется файл с тегами title, artist, album и встроенной обложкой
-- **THEN** книга получает эти значения и обложку
+- **WHEN** a file is imported with title, artist and album tags and an embedded cover
+- **THEN** the book receives those values and the cover
 
-#### Scenario: Тегов нет
+#### Scenario: Tags are absent
 
-- **WHEN** импортируется папка «Иван Ефремов - Час Быка» без тегов
-- **THEN** название и автор извлекаются из имени папки, обложка остаётся пустой
+- **WHEN** the folder `Ivan Yefremov - The Bull's Hour` is imported without tags
+- **THEN** title and author are derived from the folder name and the cover stays empty
 
-### Requirement: Редактирование метаданных
+### Requirement: Metadata editing
 
-Пользователь MUST иметь возможность изменить название, автора, чтеца, серию, номер в серии и обложку книги. Изменения сохраняются локально и участвуют в синхронизации.
+The user MUST be able to change a book's title, author, narrator, series, series number and cover. Changes are stored locally and take part in synchronization.
 
-#### Scenario: Смена обложки
+#### Scenario: Changing the cover
 
-- **WHEN** пользователь выбирает новое изображение для обложки
-- **THEN** обложка обновляется в библиотеке и на экране книги
+- **WHEN** the user picks a new image for the cover
+- **THEN** the cover updates in the library and on the book screen
 
-### Requirement: Статусы прослушивания
+### Requirement: Listening statuses
 
-Приложение MUST показывать для каждой книги статус «не начата», «в процессе» или «прослушана». Статус «прослушана» выставляется автоматически при завершении последней главы и может быть изменён вручную без сброса сохранённой позиции.
+The app MUST show one of the statuses "not started", "in progress" or "finished" for every book. The "finished" status is set automatically when the last chapter ends and may be changed manually without resetting the saved position.
 
-#### Scenario: Автоматическое завершение
+#### Scenario: Automatic completion
 
-- **WHEN** воспроизведение последней главы доходит до конца
-- **THEN** книга получает статус «прослушана»
+- **WHEN** playback of the last chapter reaches the end
+- **THEN** the book receives the "finished" status
 
-#### Scenario: Ручная смена статуса
+#### Scenario: Manual status change
 
-- **WHEN** пользователь вручную ставит статус «в процессе» для прослушанной книги
-- **THEN** статус меняется, а сохранённая позиция остаётся прежней
+- **WHEN** the user manually sets the "in progress" status for a finished book
+- **THEN** the status changes and the saved position stays as it was
 
-### Requirement: Поиск, фильтрация и сортировка
+### Requirement: Search, filtering and sorting
 
-Пользователь MUST иметь возможность искать книги по названию, автору и серии, фильтровать по статусу и источнику, сортировать по названию, автору, дате добавления и времени последнего прослушивания.
+The user MUST be able to search books by title, author and series, filter by status and source, and sort by title, author, date added and last listened time.
 
-#### Scenario: Поиск по автору
+#### Scenario: Search by author
 
-- **WHEN** пользователь вводит «Ефремов» в строку поиска
-- **THEN** список показывает только книги этого автора
+- **WHEN** the user types "Yefremov" into the search field
+- **THEN** the list shows only books by that author
 
-#### Scenario: Фильтр по источнику
+#### Scenario: Filter by source
 
-- **WHEN** пользователь выбирает фильтр «в облаке»
-- **THEN** список показывает книги, у которых аудио ещё не скачано
+- **WHEN** the user selects the "in the cloud" filter
+- **THEN** the list shows books whose audio is not downloaded yet
 
-### Requirement: Серии книг
+### Requirement: Book series
 
-Приложение MUST группировать книги с одинаковым названием серии и показывать их внутри серии в порядке номера.
+The app MUST group books that share a series name and MUST show them inside the series in series-number order.
 
-#### Scenario: Порядок внутри серии
+#### Scenario: Order inside a series
 
-- **WHEN** в библиотеке есть три книги серии с номерами 2, 1 и 3
-- **THEN** они отображаются в порядке 1, 2, 3
+- **WHEN** the library contains three books of one series numbered 2, 1 and 3
+- **THEN** they are shown in the order 1, 2, 3
 
-### Requirement: Удаление книги с устройства
+### Requirement: Deleting a book from the device
 
-Пользователь MUST иметь возможность удалить книгу с устройства. Удаляются скачанные файлы и локальная запись, а исходные файлы в облаке не затрагиваются.
+The user MUST be able to delete a book from the device. Downloaded files and the local record are removed, and the original files in the cloud are left untouched.
 
-#### Scenario: Удаление скачанной книги
+#### Scenario: Deleting a downloaded book
 
-- **WHEN** пользователь удаляет книгу, скачанную с Диска
-- **THEN** аудиофайлы удаляются с устройства, запись исчезает из библиотеки, файлы на Диске остаются
+- **WHEN** the user deletes a book downloaded from Disk
+- **THEN** the audio files are removed from the device, the record disappears from the library, and the files on Disk remain

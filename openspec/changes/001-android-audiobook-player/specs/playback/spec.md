@@ -2,103 +2,103 @@
 
 ## Purpose
 
-Воспроизводит аудиокнигу по главам, даёт управление playback-сессией, сохраняет позицию прослушивания и позволяет ставить закладки с таймкодом.
+Plays an audiobook chapter by chapter, exposes playback session controls, saves the listening position and lets the user add timecoded bookmarks.
 
 ## ADDED Requirements
 
-### Requirement: Непрерывное воспроизведение глав
+### Requirement: Continuous chapter playback
 
-Приложение MUST воспроизводить главы подряд и автоматически переходить к следующей главе, в том числе внутри одного m4b-файла, без остановки и без участия пользователя.
+The app MUST play chapters back to back and MUST advance to the next chapter automatically, including between chapters inside a single m4b file, without stopping and without user action.
 
-#### Scenario: Конец главы в папке mp3
+#### Scenario: Chapter ends in an mp3 folder
 
-- **WHEN** заканчивается воспроизведение главы 3 из папки с mp3
-- **THEN** сразу начинается глава 4, а уведомление показывает её название
+- **WHEN** playback of chapter 3 from an mp3 folder finishes
+- **THEN** chapter 4 starts immediately and the notification shows its title
 
-#### Scenario: Конец главы внутри m4b
+#### Scenario: Chapter ends inside an m4b
 
-- **WHEN** воспроизведение доходит до границы главы внутри m4b
-- **THEN** воспроизведение продолжается со следующей главы того же файла
+- **WHEN** playback reaches a chapter boundary inside an m4b
+- **THEN** playback continues from the next chapter of the same file
 
-### Requirement: Управление воспроизведением
+### Requirement: Playback controls
 
-Пользователь MUST иметь возможность ставить паузу и продолжать воспроизведение, перематывать на 15 секунд назад и вперёд, переходить к предыдущей и следующей главе и перематывать перетаскиванием прогресса.
+The user MUST be able to pause and resume playback, seek 15 seconds back and forward, move to the previous and next chapter, and seek by dragging the progress bar.
 
-#### Scenario: Перемотка на 15 секунд
+#### Scenario: Seeking by 15 seconds
 
-- **WHEN** пользователь нажимает «назад 15 секунд» на 40-й секунде главы
-- **THEN** воспроизведение продолжается с 25-й секунды
+- **WHEN** the user taps "back 15 seconds" at 40 seconds into a chapter
+- **THEN** playback continues from 25 seconds
 
-#### Scenario: Переход к следующей главе
+#### Scenario: Moving to the next chapter
 
-- **WHEN** пользователь нажимает «следующая глава»
-- **THEN** воспроизведение начинается с начала следующей главы
+- **WHEN** the user taps "next chapter"
+- **THEN** playback starts from the beginning of the next chapter
 
-### Requirement: Скорость воспроизведения
+### Requirement: Playback speed
 
-Пользователь MUST иметь возможность менять скорость в диапазоне 0.5–3.0× с шагом не больше 0.1 без изменения тональности голоса. Выбранная скорость сохраняется между запусками приложения.
+The user MUST be able to change the speed in the 0.5–3.0× range in steps of no more than 0.1 without changing voice pitch. The chosen speed is kept between app launches.
 
-#### Scenario: Скорость сохраняется
+#### Scenario: Speed is kept
 
-- **WHEN** пользователь устанавливает 1.5× и перезапускает приложение
-- **THEN** новая сессия начинается со скоростью 1.5×
+- **WHEN** the user sets 1.5× and restarts the app
+- **THEN** the new session starts at 1.5×
 
-### Requirement: Таймер сна
+### Requirement: Sleep timer
 
-Пользователь MUST иметь возможность включить таймер сна на 5, 10, 15, 30, 45 или 60 минут либо до конца текущей главы. По истечении таймера воспроизведение ставится на паузу.
+The user MUST be able to start a sleep timer for 5, 10, 15, 30, 45 or 60 minutes, or until the end of the current chapter. When the timer expires, playback MUST pause.
 
-#### Scenario: Таймер до конца главы
+#### Scenario: Timer until end of chapter
 
-- **WHEN** пользователь выбирает «до конца главы»
-- **THEN** по достижении границы главы воспроизведение останавливается и дальше не переходит
+- **WHEN** the user chooses "until end of chapter"
+- **THEN** playback stops at the chapter boundary and does not advance further
 
-### Requirement: Сохранение позиции
+### Requirement: Position saving
 
-Приложение MUST сохранять позицию не реже одного раза в 5 секунд воспроизведения, а также при паузе, уходе в фон и завершении главы, и восстанавливать её при следующем открытии книги.
+The app MUST save the position at least once every 5 seconds of playback, and also on pause, on going to the background and at chapter end, and MUST restore it the next time the book is opened.
 
-#### Scenario: Восстановление после перезапуска
+#### Scenario: Restore after restart
 
-- **WHEN** пользователь ставит паузу на 37-й минуте, закрывает приложение и снова открывает книгу
-- **THEN** воспроизведение начинается с 37-й минуты той же главы
+- **WHEN** the user pauses at minute 37, closes the app and opens the book again
+- **THEN** playback starts at minute 37 of the same chapter
 
-#### Scenario: Аварийное закрытие
+#### Scenario: Forced termination
 
-- **WHEN** приложение завершается принудительно во время воспроизведения
-- **THEN** после запуска позиция отличается от последней не более чем на 5 секунд
+- **WHEN** the app is killed while playing
+- **THEN** after launch the position differs from the last saved one by no more than 5 seconds
 
-### Requirement: Продолжить прослушивание
+### Requirement: Continue listening
 
-Главный экран MUST показывать последнюю прослушиваемую книгу с названием главы, позицией и кнопкой продолжения; нажатие открывает плеер на сохранённой позиции.
+The home screen MUST show the most recently played book with its chapter title, position and a continue button; tapping it opens the player at the saved position.
 
-#### Scenario: Карточка последней книги
+#### Scenario: Last book card
 
-- **WHEN** пользователь открывает приложение после прослушивания
-- **THEN** сверху видна книга с главой и временем, а нажатие продолжает воспроизведение
+- **WHEN** the user opens the app after listening
+- **THEN** the book with its chapter and time is shown at the top, and tapping it resumes playback
 
-### Requirement: Фоновое воспроизведение
+### Requirement: Background playback
 
-Приложение MUST продолжать воспроизведение при свёрнутом приложении и заблокированном экране, публиковать медиасессию и уведомление с обложкой, названием главы и кнопками паузы, перемотки и перехода по главам.
+The app MUST keep playing while it is in the background or the screen is locked, and MUST publish a media session and a notification with the cover, chapter title and buttons for pause, seeking and chapter navigation.
 
-#### Scenario: Блокировка экрана
+#### Scenario: Screen locked
 
-- **WHEN** пользователь блокирует экран во время воспроизведения
-- **THEN** звук продолжается, а на экране блокировки доступны кнопки управления
+- **WHEN** the user locks the screen during playback
+- **THEN** audio continues and playback controls are available on the lock screen
 
-#### Scenario: Остановка из уведомления
+#### Scenario: Stopping from the notification
 
-- **WHEN** пользователь нажимает паузу в уведомлении
-- **THEN** воспроизведение останавливается, а позиция сохраняется
+- **WHEN** the user taps pause in the notification
+- **THEN** playback stops and the position is saved
 
-### Requirement: Закладки
+### Requirement: Bookmarks
 
-Пользователь MUST иметь возможность добавить закладку в текущей позиции с необязательной заметкой, увидеть список закладок книги и перейти по закладке к её таймкоду.
+The user MUST be able to add a bookmark at the current position with an optional note, view the book's bookmark list and jump to a bookmark's timecode.
 
-#### Scenario: Переход по закладке
+#### Scenario: Jumping to a bookmark
 
-- **WHEN** пользователь нажимает закладку на 1:12:30
-- **THEN** воспроизведение начинается с этой позиции в соответствующей главе
+- **WHEN** the user taps a bookmark at 1:12:30
+- **THEN** playback starts from that position in the corresponding chapter
 
-#### Scenario: Удаление закладки
+#### Scenario: Deleting a bookmark
 
-- **WHEN** пользователь удаляет закладку
-- **THEN** она исчезает из списка и не появляется после синхронизации
+- **WHEN** the user deletes a bookmark
+- **THEN** it disappears from the list and does not come back after synchronization

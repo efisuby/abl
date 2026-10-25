@@ -2,171 +2,171 @@
 
 ## Context
 
-См. `proposal.md` — Why. Существенные ограничения на момент проектирования:
+See `proposal.md` — Why. Constraints that mattered at design time:
 
-- Приложение личное, распространяется сайдлоадом; Play-политики не диктуют архитектуру, но требования ОС (foreground service types, `POST_NOTIFICATIONS`) действуют.
-- Яндекс.Диск REST API не поддерживает условные записи (нет `If-Match`/ETag для обновления), поэтому одновременная запись одного файла с двух устройств может потерять данные.
-- Библиотека книг лежит в фиксированной папке приложения на Диске; аудио доступно только для чтения.
-- Скачанные книги хранятся в приватном каталоге приложения и теряются при удалении приложения.
-- Аудио бывает двух видов: набор mp3-файлов (глава = файл) и один m4b/m4a со встроенными главами.
+- The app is personal and sideloaded; Play policies do not shape the architecture, but OS requirements (foreground service types, `POST_NOTIFICATIONS`) do apply.
+- The Yandex Disk REST API does not support conditional writes (no `If-Match`/ETag for updates), so two devices writing the same file at once can lose data.
+- The book library lives in the app's fixed folder on Disk; audio is read-only.
+- Downloaded books live in the app's private directory and are lost when the app is uninstalled.
+- Audio comes in two shapes: a set of mp3 files (chapter = file) and a single m4b/m4a with embedded chapters.
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- Один источник истины для библиотеки и прогресса — локальная БД; сеть и облако являются синхронизацией, а не обязательным условием работы.
-- Модель глав, не зависящая от формата: плеер и прогресс работают с `Chapter`, а не с файлами.
-- Синхронизация, устойчивая к отсутствию условных записей в API Диска.
-- Возможность добавить стриминг и другие источники книг без переделки модели данных.
+- A single source of truth for the library and progress — the local database; the network and the cloud are synchronization, not a requirement for working.
+- A chapter model independent of the file format: the player and progress work with `Chapter`, not with files.
+- Synchronization that survives the absence of conditional writes in the Disk API.
+- Room to add streaming and other book sources without reworking the data model.
 
 **Non-Goals:**
 
-- Многомодульная Clean Architecture и DI-фреймворк: для одного разработчика это добавит сборочной сложности без выгоды.
-- Стриминг без полной загрузки, Android Auto, виджет, статистика прослушивания — вне этого изменения.
-- Запись, переименование и удаление аудио в облаке.
-- Собственный сервер: единственная инфраструктура — Яндекс.Диск.
+- Multi-module Clean Architecture and a DI framework: for a single developer this adds build complexity without benefit.
+- Streaming without a full download, Android Auto, a widget, listening statistics — outside this change.
+- Writing, renaming or deleting audio in the cloud.
+- A custom backend: the only infrastructure is Yandex Disk.
 
 ## Decisions
 
-### D1. Один модуль `:app`, пакеты вместо модулей
+### D1. A single `:app` module, packages instead of modules
 
-Пакеты: `data` (Room, сеть, файлы), `domain` (модели, use cases, интерфейсы репозиториев), `ui` (экраны, ViewModel), `playback` (сервис и медиасессия).
+Packages: `data` (Room, network, files), `domain` (models, use cases, repository interfaces), `ui` (screens, ViewModels), `playback` (service and media session).
 
-**Почему:** один разработчик, один APK; границы слоёв достаточно выражаются пакетами и правилами зависимостей. Многомодульность (`:core:data`, `:feature:*`) даёт параллельную сборку, которая здесь не нужна.
+**Why:** one developer, one APK; layer boundaries are expressed well enough by packages and dependency rules. Multi-module builds (`:core:data`, `:feature:*`) buy parallel compilation that is not needed here.
 
-**Альтернатива:** полноценная Clean Architecture с модулями — отклонена как преждевременная.
+**Alternative:** full Clean Architecture with modules — rejected as premature.
 
-### D2. Room — источник истины, UI через `StateFlow`
+### D2. Room is the source of truth, UI through `StateFlow`
 
-DAO возвращают `Flow`, ViewModel комбинируют их в `UiState`. Сеть и файловая система пишут в БД, UI читает только из БД.
+DAOs return `Flow`, ViewModels combine them into `UiState`. The network and the file system write to the database; the UI reads only from the database.
 
-**Почему:** один путь обновления UI, отсутствие рассинхронизации между «сетевым» и «локальным» состоянием, бесплатные обновления после синхронизации.
+**Why:** one path for UI updates, no drift between "network" and "local" state, and free updates after synchronization.
 
-### D3. Главы как `MediaItem` с `ClippingConfiguration`
+### D3. Chapters as `MediaItem` with `ClippingConfiguration`
 
-Для mp3-папки каждая глава — отдельный `MediaItem` со своим URI. Для m4b — по одному `MediaItem` на главу с тем же URI и `ClippingConfiguration(startMs, endMs)`, `mediaId` = id главы.
+For an mp3 folder each chapter is its own `MediaItem` with its own URI. For an m4b there is one `MediaItem` per chapter with the same URI and `ClippingConfiguration(startMs, endMs)`, with `mediaId` = chapter id.
 
-**Почему:** Media3 сам обеспечивает переход к следующей главе, корректные `duration`, `previous/next` и позицию в пределах главы; не нужен ручной расчёт смещений при каждом seek.
+**Why:** Media3 handles advancing to the next chapter, correct `duration`, `previous/next` and the position within a chapter by itself; there is no need to recompute offsets on every seek.
 
-**Альтернатива:** один `MediaItem` на книгу и seek по смещениям глав — отклонена: переход по главам и прогресс внутри главы пришлось бы считать вручную, а `duration` в уведомлении показывал бы всю книгу.
+**Alternative:** one `MediaItem` per book and seeks by chapter offsets — rejected: chapter navigation and intra-chapter progress would have to be computed by hand, and the notification `duration` would show the whole book.
 
-**Ограничение:** точность границ ~10–50 мс из-за ключевых кадров; для аудиокниг это незаметно.
+**Limitation:** boundary accuracy is ~10–50 ms because of keyframes; imperceptible for audiobooks.
 
-### D4. Приватный каталог и манифест книги
+### D4. Private directory and a book manifest
 
 ```
 filesDir/books/<bookId>/
-  book.json        # метаданные, список глав, источник, контрольные суммы
+  book.json        # metadata, chapter list, source, checksums
   cover.jpg
   audio/...
 ```
 
-Файлы копируются из SAF через `ContentResolver` во временный `.part`, затем переименовываются. `book.json` позволяет восстановить книгу без БД и переживает сбой миграции.
+Files are copied from SAF through `ContentResolver` into a temporary `.part` and then renamed. `book.json` makes it possible to restore a book without the database and survives a migration failure.
 
-**Почему:** не нужны разрешения на общую память, нет конфликтов с другими приложениями, простое удаление книги — удаление каталога.
+**Why:** no permission for shared storage, no conflicts with other apps, and deleting a book is simply deleting a directory.
 
-**Следствие:** `allowBackup` ограничивается через `dataExtractionRules` — аудио исключается, чтобы не упираться в лимит бэкапа 25 МБ.
+**Consequence:** `allowBackup` is constrained through `dataExtractionRules` — audio is excluded so the 25 MB backup limit is not hit.
 
-### D5. Извлечение метаданных и глав
+### D5. Metadata and chapter extraction
 
-Метаданные и обложка — `MediaMetadataRetriever` (ID3, MP4-теги, `getEmbeddedPicture`). Главы m4b — каскад:
+Metadata and cover come from `MediaMetadataRetriever` (ID3, MP4 tags, `getEmbeddedPicture`). m4b chapters use a cascade:
 
-1. `MediaMetadata.chapters` из Media3, если экстрактор их отдал;
-2. парсинг Nero-атома `chpl`;
-3. QuickTime chapter track (`tref/chap`);
-4. одна глава на весь файл.
+1. `MediaMetadata.chapters` from Media3, if the extractor provides them;
+2. parsing of the Nero `chpl` atom;
+3. the QuickTime chapter track (`tref/chap`);
+4. a single chapter for the whole file.
 
-**Почему:** формат глав в m4b не стандартизирован, файлы из разных источников ведут себя по-разному; каскад даёт предсказуемый результат без внешних зависимостей.
+**Why:** the chapter format in m4b is not standardized and files from different sources behave differently; the cascade gives a predictable result without external dependencies.
 
-**Спайк обязателен:** прогнать 3–5 реальных книг до реализации экрана глав; результат фиксируется в `docs/spikes/m4b-chapters.md`.
+**A spike is mandatory:** run 3–5 real books before implementing the chapter screen; the result is recorded in `docs/spikes/m4b-chapters.md`.
 
-### D6. REST-клиент вместо `disk-restapi-sdk`
+### D6. A REST client instead of `disk-restapi-sdk`
 
-OkHttp + kotlinx.serialization, хосты `cloud-api.yandex.net`, заголовок `Authorization: OAuth <token>`.
+OkHttp + kotlinx.serialization, hosts `cloud-api.yandex.net`, header `Authorization: OAuth <token>`.
 
-**Почему:** `com.yandex.android:disk-restapi-sdk:1.03` — Java-библиотека 2013 года без Android-обвязки, без докачки и без контроля таймаутов; для файлов 1–2 ГБ это критично.
+**Why:** `com.yandex.android:disk-restapi-sdk:1.03` is a 2013 Java library with no Android integration, no resume and no timeout control; for 1–2 GB files that is critical.
 
-**Альтернатива:** WebDAV — медленнее на листингах и хуже документирован для мобильных сценариев.
+**Alternative:** WebDAV — slower on listings and less documented for mobile scenarios.
 
-### D7. Авторизация через Yandex ID SDK, токен — в Keystore-хранилище
+### D7. Authorization through the Yandex ID SDK, token in Keystore-backed storage
 
-`com.yandex.android:authsdk:3.1.3`, `manifestPlaceholders["YANDEX_CLIENT_ID"]`. Токен шифруется ключом Android Keystore (AES/GCM) и хранится в приватном файле; в `DataStore`, логи и бэкап не попадает.
+`com.yandex.android:authsdk:3.1.3`, `manifestPlaceholders["YANDEX_CLIENT_ID"]`. The token is encrypted with an Android Keystore key (AES/GCM) and stored in a private file; it never reaches `DataStore`, logs or backups.
 
-**Почему:** SDK не отдаёт refresh token, поэтому токен живёт около года и требует повторного входа; хранить его в открытом виде на устройстве нельзя.
+**Why:** the SDK does not return a refresh token, so the token lives about a year and requires signing in again; storing it in plaintext on the device is not acceptable.
 
-**Риск:** у приложения типа «Для авторизации пользователей» может не оказаться группы прав `cloud_api`; тогда план Б — тип «Для доступа к API» с `verification_code` и PKCE.
+**Risk:** an app of the "For user authorization" type may not have the `cloud_api` permission group available; plan B is the "For API access" type with `verification_code` and PKCE.
 
-### D8. Синхронизация: файл на устройство вместо общего
+### D8. Synchronization: one file per device instead of a shared one
 
 ```
 /Apps/AudioBookPlayer/
-  books/                     # аудиокниги, кладёт пользователь
-  progress/<deviceId>.json   # позиции этого устройства
+  books/                     # audiobooks, placed by the user
+  progress/<deviceId>.json   # positions of this device
   bookmarks.json             # union + tombstones
-  settings/<deviceId>.json   # настройки этого устройства
-  library.json               # реестр книг и метаданных
+  settings/<deviceId>.json   # settings of this device
+  library.json               # book and metadata registry
   covers/<bookId>.jpg
 ```
 
-Прогресс: при чтении сливаются все `progress/*.json`, побеждает запись с максимальным `updatedAt` по книге. Закладки: union по `id`, удаления — tombstone с `deletedAt`. Настройки: LWW по каждому ключу.
+Progress: on read all `progress/*.json` are merged, and the record with the greatest `updatedAt` per book wins. Bookmarks: union by `id`, deletions are tombstones with `deletedAt`. Settings: LWW per key.
 
-**Почему:** API Диска не умеет условных записей, поэтому общий файл прогресса при одновременной записи терял бы данные. Отдельные файлы устраняют конфликт записи; слияние переносится на чтение и не требует блокировок.
+**Why:** the Disk API has no conditional writes, so a shared progress file would lose data on simultaneous writes. Separate files remove the write conflict; merging moves to read time and needs no locks.
 
-**Альтернатива:** один `progress.json` с `If-Match` — невозможна на этом API.
+**Alternative:** a single `progress.json` with `If-Match` — impossible on this API.
 
-**Ограничение:** часы устройств могут расходиться; при равных `updatedAt` побеждает больший `positionMs` только для книг в статусе «в процессе», иначе — детерминированный порядок по `deviceId`.
+**Limitation:** device clocks can drift; when `updatedAt` values are equal, the larger `positionMs` wins only for books in the "in progress" status, otherwise a deterministic order by `deviceId` applies.
 
-### D9. `bookId` детерминирован для облачных книг
+### D9. `bookId` is deterministic for cloud books
 
-`bookId = UUID.nameUUIDFromBytes(remotePath.toByteArray())` для книг с Диска; случайный UUID для локального импорта.
+`bookId = UUID.nameUUIDFromBytes(remotePath.toByteArray())` for books from Disk; a random UUID for local imports.
 
-**Почему:** два устройства, импортировавшие одну и ту же облачную папку, должны получить одинаковый идентификатор, иначе прогресс и закладки не сойдутся.
+**Why:** two devices that imported the same cloud folder must get the same identifier, otherwise progress and bookmarks will not converge.
 
-### D10. Загрузки — WorkManager, уникальная работа на книгу
+### D10. Downloads through WorkManager, one unique job per book
 
-`enqueueUniqueWork(bookId, KEEP)`, foreground `dataSync`, докачка через `Range`, проверка `md5` из метаданных Диска, ограничение параллельности 2, ограничение «только Wi-Fi» через `Constraints`.
+`enqueueUniqueWork(bookId, KEEP)`, foreground `dataSync`, resume through `Range`, `md5` verification from Disk metadata, concurrency limit 2, "Wi-Fi only" through `Constraints`.
 
-**Почему:** WorkManager переживает перезапуск процесса, умеет ждать сеть и даёт прогресс в уведомлении. `md5` одновременно служит проверкой целостности и признаком изменения файла в облаке.
+**Why:** WorkManager survives process restarts, can wait for a network and reports progress in a notification. `md5` serves both as an integrity check and as a signal that a file changed in the cloud.
 
-### D11. Ручной DI через `AppContainer`
+### D11. Manual DI through `AppContainer`
 
-`AblApplication` создаёт `AppContainer` с БД, репозиториями, клиентом Диска и планировщиком; ViewModel получают зависимости через фабрику.
+`AblApplication` creates an `AppContainer` with the database, repositories, Disk client and scheduler; ViewModels receive dependencies through a factory.
 
-**Почему:** Hilt добавляет KSP-обработку и время сборки; для приложения на ~30 экранов ручной контейнер читается проще.
+**Why:** Hilt adds KSP processing and build time; for an app of about 30 screens a manual container is easier to read.
 
-**Альтернатива:** Hilt — отклонён, можно ввести позже без смены архитектуры.
+**Alternative:** Hilt — rejected, can be introduced later without changing the architecture.
 
-### D12. Настройки — DataStore Preferences
+### D12. Settings in DataStore Preferences
 
-Тема, язык, скорость, «только Wi-Fi», время последней синхронизации. Синхронизируемые ключи помечаются явно, чтобы новые настройки не утекали в облако по умолчанию.
+Theme, language, speed, "Wi-Fi only", last synchronization time. Syncable keys are marked explicitly so that new settings do not leak into the cloud by default.
 
-### D13. Тестирование
+### D13. Testing
 
-- Unit (JUnit): парсинг имён файлов, порядок глав, слияние прогресса (включая расхождение часов), tombstone-логика закладок, парсер `chpl`.
-- Сеть: MockWebServer для клиента Диска — коды 401/404/429, докачка по `Range`.
-- Instrumented: Room in-memory DAO, smoke-тест плеера (играет локальный файл, пауза, восстановление позиции), проверка импорта через `ActivityScenario`.
-- Ручная проверка: OAuth на реальном аккаунте и загрузка книги ≥500 МБ на физическом устройстве.
+- Unit (JUnit): file-name parsing, chapter order, progress merging (including clock drift), bookmark tombstone logic, the `chpl` parser.
+- Network: MockWebServer for the Disk client — 401/404/429 codes, resume through `Range`.
+- Instrumented: Room in-memory DAOs, a player smoke test (plays a local file, pauses, restores the position), import verification through `ActivityScenario`.
+- Manual verification: OAuth on a real account and downloading a book of ≥500 MB on a physical device.
 
 ## Risks / Trade-offs
 
-| Риск | Смягчение |
+| Risk | Mitigation |
 | --- | --- |
-| Разнообразие форматов глав m4b | Каскад D5, спайк на реальных файлах, деградация до одной главы без потери воспроизведения |
-| Группа прав `cloud_api` недоступна для login-приложения | Fallback на тип «Для доступа к API» + PKCE; проверяется на первом запуске авторизации |
-| Ограничения частоты API Диска | Кэш листингов, ленивая загрузка уровней, повтор с экспоненциальной задержкой на 429 |
-| Потеря аудио при переустановке | `library.json` восстанавливает библиотеку; повторная загрузка — явный сценарий с прогрессом |
-| Большие файлы и нехватка места | Проверка свободного места до старта, отмена с очисткой `.part`, предупреждение с размером |
-| R8 ломает kotlinx.serialization | `@Serializable`-модели покрываются keep-правилами, release-сборка проверяется в каждой задаче |
-| Android 14+ убивает foreground service | Явные типы `mediaPlayback` и `dataSync`, запуск только из видимого состояния |
-| Расхождение часов устройств | Детерминированный тай-брейк D8, `updatedAt` монотонно растёт локально |
-| Aудио в `filesDir` не входит в бэкап | Осознанно: бэкап не раздувается, восстановление — из облака |
+| Variety of m4b chapter formats | Cascade from D5, a spike on real files, degradation to a single chapter without losing playback |
+| The `cloud_api` permission group is unavailable for a login app | Fallback to the "For API access" type + PKCE; verified on the first authorization |
+| Yandex Disk API rate limits | Listing cache, lazy level loading, retry with exponential backoff on 429 |
+| Audio lost on reinstall | `library.json` restores the library; re-downloading is an explicit flow with progress |
+| Large files and low free space | Free-space check before start, cancellation with `.part` cleanup, a warning with the book size |
+| R8 breaks kotlinx.serialization | `@Serializable` models are covered by keep rules and the release build is checked in every task |
+| Android 14+ kills the foreground service | Explicit `mediaPlayback` and `dataSync` types, starting only from a visible state |
+| Device clock drift | Deterministic tie-break from D8, `updatedAt` grows monotonically locally |
+| Audio in `filesDir` is not backed up | Deliberate: the backup does not grow, recovery comes from the cloud |
 
 ## Migration Plan
 
-Проект новый, миграций данных нет. `versionCode = 1`, схема Room — версия 1 без миграций. `applicationId` меняется на `com.efisuby.abl`, поэтому ранее установленная заглушка `com.abl.audiobookplayer` не обновляется: её нужно удалить вручную. Откат — переустановка предыдущего APK; облачные служебные файлы при этом остаются, так как формат версионируется полем `schemaVersion` в каждом JSON.
+The project is new, so there are no data migrations. `versionCode = 1`, Room schema version 1 without migrations. `applicationId` changes to `com.efisuby.abl`, so the previously installed placeholder `com.abl.audiobookplayer` cannot be updated and must be removed manually. Rollback means reinstalling the previous APK; the cloud service files survive because their format is versioned by a `schemaVersion` field in every JSON document.
 
 ## Open Questions
 
-- Нужен ли стриминг без полной загрузки (F6) — решается после M3, не влияет на модель данных.
-- Нужны ли Android Auto и виджет — влияют только на слой UI и медиасессию.
-- Нужна ли статистика прослушивания — потребует отдельной таблицы, но не меняет текущие требования.
+- Is streaming without a full download (F6) needed — decided after M3, does not affect the data model.
+- Are Android Auto and a widget needed — they affect only the UI layer and the media session.
+- Are listening statistics needed — they would require a separate table but do not change the current requirements.
