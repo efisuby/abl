@@ -1,0 +1,23 @@
+AudioBook Player uses the following open-source components.
+
+AndroidX (core, appcompat, activity, constraintlayout, recyclerview, lifecycle, work, room, datastore, media3)
+Copyright The Android Open Source Project
+Licensed under the Apache License, Version 2.0 — https://www.apache.org/licenses/LICENSE-2.0
+
+Material Components for Android
+Copyright Google LLC
+Licensed under the Apache License, Version 2.0
+
+Kotlin and kotlinx.coroutines, kotlinx.serialization
+Copyright JetBrains s.r.o. and Kotlin Programming Language contributors
+Licensed under the Apache License, Version 2.0
+
+OkHttp and Okio
+Copyright Square, Inc.
+Licensed under the Apache License, Version 2.0
+
+Yandex ID SDK (com.yandex.android:authsdk)
+Copyright Yandex LLC
+Distributed under the Yandex terms of use — https://yandex.com/legal/
+
+Apache License, Version 2.0: unless required by applicable law or agreed to in writing, the software is distributed on an "AS IS" basis, without warranties or conditions of any kind. The full text is at https://www.apache.org/licenses/LICENSE-2.0.

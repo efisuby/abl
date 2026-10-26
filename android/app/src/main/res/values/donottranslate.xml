@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Public addresses shown on the About screen; the policy is published from docs/store/. -->
+    <string name="about_policy_url" translatable="false">https://github.com/efisuby/abl/blob/master/docs/store/privacy-policy.md</string>
+    <string name="about_contact_url" translatable="false">https://github.com/efisuby/abl/issues</string>
+</resources>

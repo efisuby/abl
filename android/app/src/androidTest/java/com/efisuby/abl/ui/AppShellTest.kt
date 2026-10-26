@@ -10,6 +10,7 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.efisuby.abl.MainActivity
 import com.efisuby.abl.R
@@ -50,6 +51,7 @@ class AppShellTest {
     }
 
     @Test
+    @SdkSuppress(minSdkVersion = 29) // `cmd uimode` does not exist before Android 10
     fun theSystemThemeFollowsTheDeviceSetting() {
         setTheme(ThemeMode.SYSTEM)
         shell("cmd uimode night no")
@@ -71,6 +73,7 @@ class AppShellTest {
     }
 
     @Test
+    @SdkSuppress(minSdkVersion = 29) // `cmd uimode` does not exist before Android 10
     fun choosingLightInSettingsSwitchesTheOpenScreen() {
         shell("cmd uimode night yes")
         setTheme(ThemeMode.SYSTEM)

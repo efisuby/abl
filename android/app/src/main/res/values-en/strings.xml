@@ -207,4 +207,13 @@
     <string name="cloud_error">Could not load the list. Check your connection.</string>
     <string name="cloud_sign_in_cancelled">Sign-in cancelled</string>
     <string name="cloud_sign_in_failed">Could not sign in. Check your connection and try again.</string>
+    <string name="about_title">About</string>
+    <string name="about_summary">An audiobook player for your own books: files from the device and Google Drive, Yandex Disk cloud, bookmarks, sleep timer and progress sync. No ads, no analytics.</string>
+    <string name="about_policy">Privacy policy</string>
+    <string name="about_licenses">Licenses</string>
+    <string name="about_contact">Feedback</string>
+    <string name="about_licenses_title">Open-source licenses</string>
+    <string name="about_close">Close</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="settings_about">About</string>
 </resources>

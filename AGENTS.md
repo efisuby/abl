@@ -13,7 +13,7 @@
   - Screens are separate Activities (no fragments/navigation lib yet); ViewModels via `viewModelFactory { initializer { … } }` reading `appContainer`. Edge-to-edge is enforced at target 36 → call `enableEdgeToEdge()` + `applySystemBarInsets(view)` (`ui/common/UiKit.kt`).
 - UI toolkit: **Views + ViewBinding** (AppCompat, Material, RecyclerView, ConstraintLayout). **No Jetpack Compose** — don't add it without a design change.
 - Toolchain: JDK 21 to run Gradle; bytecode target Java/JVM 17. KSP 2.3.12 (Room compiler).
-- Distribution: sideload / personal use (no Play Store)
+- Distribution: public release prepared (Google Play AAB + RuStore APK, version 1.0.0); store materials and owner-only steps live in `docs/store/`
 
 ---
 
@@ -60,6 +60,9 @@
 - **Upload (`data/disk/BookUploader`, `UploadWorker`, `UploadController`)**: a LOCAL book keeps its `bookId`; after the upload `books.source = YANDEX_DISK`, `remotePath = <root>/<sanitized title>` (name taken → ` (2)`), `book.json` gets `ManifestFile.remote` — no Room change. The chosen folder is written to `book.json` *before* the first byte, so a rerun fills the same folder and skips files with equal size+md5. Status lives in the in-memory `UploadTracker` (not Room). `CloudBookImporter.import(resource, bookId)` and `RoomSyncStore.restoreBook` restore an uploaded book under its original id (chapter ids stay). 507 = Disk full, not retried. `AppContainer.uploadScheduler` is a `var` for tests.
 - **Sync (`data/sync/`)**: files on Disk under `Приложения/AudioBookPlayer` — `progress/<deviceId>.json`, `settings/<deviceId>.json`, shared `bookmarks.json` and `library.json`, `covers/<bookId>.jpg` (`SyncEngine` over `CloudFiles` + `SyncStore`; merge rules in `SyncMerge`). A damaged file of another device is skipped. No change queue: local changes live in Room and each run publishes the difference, so offline changes go out on the next run. `SyncRunner` classifies the result (transient → WorkManager `retry()` with backoff), `WorkManagerSyncScheduler` = unique work `sync`, network CONNECTED, `APPEND_OR_REPLACE`, 10 s settle delay unless manual. Triggers: `MainActivity` cold start, `PlayerActivity.onStop` (not on rotation), Settings button. `AppContainer.syncScheduler` is a `var` for tests. Metadata sync is LWW on `books.metadataUpdatedAt` (monotonic, set in `BookActions.updateMetadata`).
 - **Look & feel**: warm dark palette in `values/colors.xml` (`abl_*`, amber accent) mapped in `themes.xml`; shape scale 12/16/24 dp (`radius_*`, `ShapeAppearance.Abl.*`), spacing tokens `space_*`. Styles: `Widget.Abl.Cover` (ShapeableImageView, rounded, use `ImageView.setCover()` to get the book placeholder when there is no cover), `Widget.Abl.Card`, `Widget.Abl.SheetRow`, `Widget.Abl.Button.Danger`. Library = CoordinatorLayout (toolbar/filters/continue card scroll away) + `addFab` → bottom sheet `sheet_add` (`sheetFolder/sheetFile/sheetCloud`); `importFolder`/`importFile` live in the empty state. `MiniPlayer` (`ui/library/`) connects its own `MediaController` between `onStart` and `onStop`; the «Продолжить» card hides while it shows. `PlayerActivity` has a toolbar (back, «О книге»). Keep view ids stable — UI tests use them.
+- **About screen** (`ui/about/AboutActivity`, entry: row at the end of Settings, id `aboutRow`): version from `PackageManager`, policy and feedback links are `translatable=false` strings in `values/donottranslate.xml` (`about_policy_url`, `about_contact_url`), licenses = static asset `assets/licenses.txt` shown in a dialog — update it when a dependency is added.
+- **Release & stores**: `./gradlew :app:bundleRelease` (AAB for Play) and `:app:assembleRelease` (APK for RuStore), versionName 1.0.0; store texts, Data safety answers, owner-only steps and assets (icon 512, feature graphic, ru/en × light/dark screenshots cropped to 1080×2160) live in `docs/store/`. Task 006 §3 is owner-only.
+- **Instrumented tests on older APIs**: AVD `abl-api24` (API 24, google_apis x86_64) runs the whole suite; `AblTestRunner` also updates the application context locale before API 33 (the app language reaches only activities there), and the two system-theme tests are `@SdkSuppress(minSdkVersion = 29)` (`cmd uimode`).
 - OpenSpec: all artifacts in English (`openspec/config.yaml`); every task must state how it is verified. Change 001 is archived (`openspec/specs/` holds the capabilities); new work goes through changes 002–006, each a separate OpenSpec change.
 
 ---
@@ -123,7 +126,7 @@ cd /home/spell/src/abl && openspec validate 001-android-audiobook-player --stric
 
 ## Handoff Notes for Next Agent
 
-1. **Status (2026-10-26):** Groups 1–8 complete (8.8 checked manually on the S24+). Next: group 9 (integration and verification).
+1. **Status (2026-10-26):** Changes 001–005 done; 006 (public release) done except §3 (owner actions in `docs/store/owner-actions.md`). Archive 006 after the owner finishes §3, or sooner if only the repository part matters.
 2. **m4b spike done** — `docs/spikes/m4b-chapters.md`; sample has no Audible/iTunes m4b yet.
 3. **Backup rules are verified** — don't remove them. The A/B test proved exclusion works.
 4. **Signing is stable** — debug and release use the same release key. OAuth fingerprint won't change.

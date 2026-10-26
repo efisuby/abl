@@ -21,6 +21,7 @@ import com.efisuby.abl.data.auth.AuthState
 import com.efisuby.abl.data.settings.AppLanguage
 import com.efisuby.abl.data.settings.ThemeMode
 import com.efisuby.abl.databinding.ActivitySettingsBinding
+import com.efisuby.abl.ui.about.AboutActivity
 import com.efisuby.abl.ui.common.Appearance
 import com.efisuby.abl.ui.common.applySystemBarInsets
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -54,6 +55,7 @@ class SettingsActivity : AppCompatActivity() {
             // render() sets the switch too; only a change by the user is written.
             if (checked != viewModel.state.value?.wifiOnly) viewModel.setWifiOnly(checked)
         }
+        binding.aboutRow.setOnClickListener { startActivity(AboutActivity.intent(this)) }
         binding.themeRow.setOnClickListener { chooseTheme() }
         binding.languageRow.setOnClickListener { chooseLanguage() }
         binding.languageValue.text = getString(Appearance.currentLanguage(this).label())

@@ -215,4 +215,13 @@
     <string name="cloud_error">Не удалось загрузить список. Проверьте соединение.</string>
     <string name="cloud_sign_in_cancelled">Вход отменён</string>
     <string name="cloud_sign_in_failed">Не удалось войти. Проверьте соединение и попробуйте ещё раз.</string>
+    <string name="about_title">О приложении</string>
+    <string name="about_summary">Аудиоплеер для ваших книг: файлы с устройства и Google Drive, облако Яндекс.Диска, закладки, таймер сна и синхронизация прогресса. Без рекламы и аналитики.</string>
+    <string name="about_policy">Политика конфиденциальности</string>
+    <string name="about_licenses">Лицензии</string>
+    <string name="about_contact">Обратная связь</string>
+    <string name="about_licenses_title">Лицензии открытых компонентов</string>
+    <string name="about_close">Закрыть</string>
+    <string name="about_version">Версия %1$s</string>
+    <string name="settings_about">О приложении</string>
 </resources>
