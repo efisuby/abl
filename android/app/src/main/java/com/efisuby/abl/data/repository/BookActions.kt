@@ -66,11 +66,19 @@ class BookActions(
             // A running download is cancelled by the download queue itself (group 7).
             it.source == BookSource.YANDEX_DISK && it.downloadState in REMOVABLE
         }
-        for (book in downloaded) {
-            library.setDownloadState(book.id, DownloadState.IN_CLOUD)
-            withContext(ioDispatcher) { storage.audioDir(book.id).deleteRecursively() }
-        }
+        downloaded.forEach { removeFiles(it.id) }
         return downloaded.size
+    }
+
+    /** Frees the space of one downloaded cloud book; it stays in the library as "in the cloud". */
+    suspend fun removeDownload(bookId: String) {
+        val book = library.getBook(bookId) ?: return
+        if (book.source == BookSource.YANDEX_DISK && book.downloadState in REMOVABLE) removeFiles(bookId)
+    }
+
+    private suspend fun removeFiles(bookId: String) {
+        library.setDownloadState(bookId, DownloadState.IN_CLOUD)
+        withContext(ioDispatcher) { storage.audioDir(bookId).deleteRecursively() }
     }
 
     /** Saves the edit and, if given, a new cover as JPEG bytes; returns the updated book. */

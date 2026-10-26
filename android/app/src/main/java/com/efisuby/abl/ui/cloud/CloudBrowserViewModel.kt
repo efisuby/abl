@@ -3,11 +3,16 @@ package com.efisuby.abl.ui.cloud
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.efisuby.abl.data.disk.AddResult
 import com.efisuby.abl.data.disk.DiskException
 import com.efisuby.abl.data.disk.DiskResource
 import com.efisuby.abl.data.disk.DiskSource
 import com.efisuby.abl.data.disk.listAll
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +37,9 @@ data class CloudBrowserState(
 class CloudBrowserViewModel(
     private val source: DiskSource,
     private val root: String,
+    private val adder: suspend (DiskResource) -> AddResult = { AddResult.Failed },
+    /** Adding a book and queuing its download must outlive the screen; defaults to the view model's scope. */
+    private val writeScope: CoroutineScope? = null,
 ) : ViewModel() {
 
     private val stack = ArrayDeque(listOf(root))
@@ -41,8 +49,25 @@ class CloudBrowserViewModel(
     private val _state = MutableStateFlow(CloudBrowserState(root, isRoot = true))
     val state: StateFlow<CloudBrowserState> = _state
 
+    private val _events = Channel<AddResult>(Channel.BUFFERED)
+
+    /** Outcome of each "download" tap, for a toast or dialog. */
+    val events: Flow<AddResult> = _events.receiveAsFlow()
+
     init {
         show(root)
+    }
+
+    /** Downloads a folder or file of the current level as a book. */
+    fun download(resource: DiskResource) {
+        (writeScope ?: viewModelScope).launch { _events.send(adder(resource)) }
+    }
+
+    /** Downloads the opened folder as one book; not offered at the root. */
+    fun downloadCurrentFolder() {
+        val path = stack.last()
+        if (path == root) return
+        download(DiskResource(name = path.substringAfterLast('/'), path = path, type = "dir"))
     }
 
     fun open(folder: DiskResource) {

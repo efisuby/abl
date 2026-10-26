@@ -3,7 +3,7 @@ package com.efisuby.abl.data.disk
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-private val AUDIO_EXTENSIONS = setOf("mp3", "m4b", "m4a")
+private val AUDIO_EXTENSIONS = setOf("mp3", "m4b", "m4a", "aac")
 
 /** A file or folder on Yandex Disk (`/v1/disk/resources`). */
 @Serializable

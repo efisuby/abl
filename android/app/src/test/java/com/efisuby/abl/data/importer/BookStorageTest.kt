@@ -106,4 +106,16 @@ class BookStorageTest {
             return n
         }
     }
+
+    @Test
+    fun `book size counts every file of the book and nothing of other books`() {
+        val storage = BookStorage(temp.root.resolve("books"))
+        storage.audioFile("a", "1.mp3").apply { parentFile!!.mkdirs(); writeBytes(ByteArray(100)) }
+        storage.audioFile("a", "2.mp3.part").writeBytes(ByteArray(40))
+        storage.manifestFile("a").writeBytes(ByteArray(10))
+        storage.audioFile("b", "1.mp3").apply { parentFile!!.mkdirs(); writeBytes(ByteArray(1000)) }
+
+        org.junit.Assert.assertEquals(150L, storage.bookBytes("a"))
+        org.junit.Assert.assertEquals(0L, storage.bookBytes("missing"))
+    }
 }

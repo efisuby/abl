@@ -13,6 +13,7 @@ import com.efisuby.abl.databinding.ItemCloudBinding
 
 class CloudAdapter(
     private val onFolder: (DiskResource) -> Unit,
+    private val onDownload: (DiskResource) -> Unit,
 ) : ListAdapter<DiskResource, CloudAdapter.Holder>(Diff) {
 
     inner class Holder(val binding: ItemCloudBinding) : RecyclerView.ViewHolder(binding.root)
@@ -29,9 +30,10 @@ class CloudAdapter(
         } else {
             Formatter.formatShortFileSize(context, item.size)
         }
-        // Files are not actionable until cloud import (7.3).
         holder.itemView.isClickable = item.isFolder
         holder.itemView.setOnClickListener(if (item.isFolder) View.OnClickListener { onFolder(item) } else null)
+        holder.binding.download.contentDescription = context.getString(R.string.cloud_download_item, item.name)
+        holder.binding.download.setOnClickListener { onDownload(item) }
     }
 
     private object Diff : DiffUtil.ItemCallback<DiskResource>() {

@@ -57,10 +57,10 @@
 
 - [x] 7.1 Implement the REST client (`/v1/disk/resources`, `download`, `upload`) with models and 401/404/429 handling; verify with MockWebServer tests, including retry after 429
 - [x] 7.2 Build the cloud folder browser with lazy level loading; verify with a UI test on a mock: navigating into a folder requests only its contents
-- [ ] 7.3 Implement cloud book import: creating the record, detecting the format, queueing the download; verify with a unit test: `bookId` is the same for two imports of the same path
-- [ ] 7.4 Implement the download worker with `Range` resume, `md5` verification and a `dataSync` foreground notification; verify with a MockWebServer test: an interruption mid-way continues from the same byte
-- [ ] 7.5 Implement the "Wi-Fi only" constraint, cancellation and retry; verify with a unit test: on a mobile connection the job does not start, and after cancellation the `.part` is removed
-- [ ] 7.6 Show offline book states and block playback of a book that is not downloaded; verify with a UI test: tapping play on a book "in the cloud" opens the download offer
+- [x] 7.3 Implement cloud book import: creating the record, detecting the format, queueing the download; verify with a unit test: `bookId` is the same for two imports of the same path
+- [x] 7.4 Implement the download worker with `Range` resume, `md5` verification and a `dataSync` foreground notification; verify with a MockWebServer test: an interruption mid-way continues from the same byte
+- [x] 7.5 Implement the "Wi-Fi only" constraint, cancellation and retry; verify with a unit test: on a mobile connection the job does not start, and after cancellation the `.part` is removed
+- [x] 7.6 Show offline book states and block playback of a book that is not downloaded; verify with a UI test: tapping play on a book "in the cloud" opens the download offer
 - [ ] 7.7 Implement storage management: book sizes, total volume, deleting downloads, free-space check; verify with a unit test of the size calculation and manually the low-space warning
 
 ## 8. Synchronization

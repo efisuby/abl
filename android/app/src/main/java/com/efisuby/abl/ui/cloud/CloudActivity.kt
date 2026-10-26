@@ -18,9 +18,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.efisuby.abl.R
 import com.efisuby.abl.appContainer
 import com.efisuby.abl.data.auth.AuthState
+import com.efisuby.abl.data.disk.AddResult
 import com.efisuby.abl.data.disk.DiskApi
 import com.efisuby.abl.databinding.ActivityCloudBinding
 import com.efisuby.abl.ui.common.applySystemBarInsets
+import com.efisuby.abl.ui.common.showNoSpace
 import com.yandex.authsdk.YandexAuthLoginOptions
 import com.yandex.authsdk.YandexAuthOptions
 import com.yandex.authsdk.YandexAuthResult
@@ -39,14 +41,22 @@ class CloudActivity : AppCompatActivity() {
 
     private val viewModel: CloudBrowserViewModel by viewModels {
         viewModelFactory {
-            initializer { CloudBrowserViewModel(appContainer.diskSource, DiskApi.BOOKS_ROOT) }
+            initializer {
+                val container = appContainer
+                CloudBrowserViewModel(
+                    container.diskSource,
+                    DiskApi.BOOKS_ROOT,
+                    container.cloudLibraryAdder::add,
+                    container.applicationScope,
+                )
+            }
         }
     }
 
     // Created in onCreate: YandexAuthOptions needs the base context, which a field initializer lacks.
     private lateinit var signInLauncher: ActivityResultLauncher<YandexAuthLoginOptions>
 
-    private val adapter = CloudAdapter { folder -> viewModel.open(folder) }
+    private val adapter = CloudAdapter(onFolder = { viewModel.open(it) }, onDownload = { viewModel.download(it) })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -61,6 +71,12 @@ class CloudActivity : AppCompatActivity() {
 
         binding.list.adapter = adapter
         binding.toolbar.setNavigationOnClickListener { goUp() }
+        binding.toolbar.inflateMenu(R.menu.cloud)
+        binding.toolbar.setOnMenuItemClickListener { item ->
+            if (item.itemId != R.id.downloadFolder) return@setOnMenuItemClickListener false
+            viewModel.downloadCurrentFolder()
+            true
+        }
         binding.signIn.setOnClickListener { signInLauncher.launch(YandexAuthLoginOptions()) }
         binding.retry.setOnClickListener { viewModel.retry() }
         onBackPressedDispatcher.addCallback(
@@ -74,6 +90,7 @@ class CloudActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { auth.state.collect(::renderAuth) }
                 launch { viewModel.state.collect(::renderBrowser) }
+                launch { viewModel.events.collect(::report) }
             }
         }
     }
@@ -99,12 +116,24 @@ class CloudActivity : AppCompatActivity() {
         if (auth.state.value == AuthState.SIGNED_IN) {
             binding.toolbar.title = if (state.isRoot) getString(R.string.cloud_title) else state.path.substringAfterLast('/')
         }
+        // Downloading the whole level only makes sense inside a book folder, not at the root.
+        binding.toolbar.menu.findItem(R.id.downloadFolder)?.isVisible = !state.isRoot && !state.failed
         adapter.submitList(state.items)
         binding.loading.isVisible = state.loading
         val showNotice = !state.loading && (state.failed || state.items.isEmpty())
         binding.notice.isVisible = showNotice
         binding.retry.isVisible = state.failed
         binding.noticeText.setText(if (state.failed) R.string.cloud_error else R.string.cloud_empty)
+    }
+
+    private fun report(result: AddResult) {
+        when (result) {
+            AddResult.Added -> toast(R.string.cloud_added)
+            is AddResult.AlreadyThere -> toast(if (result.downloadStarted) R.string.download_started else R.string.cloud_already_added)
+            AddResult.NoAudio -> toast(R.string.cloud_no_audio)
+            AddResult.Failed -> toast(R.string.cloud_add_failed)
+            is AddResult.NotEnoughSpace -> showNoSpace(result.requiredBytes, result.freeBytes)
+        }
     }
 
     private fun handle(result: YandexAuthResult) {

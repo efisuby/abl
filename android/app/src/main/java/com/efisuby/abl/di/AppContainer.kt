@@ -5,7 +5,14 @@ import com.efisuby.abl.data.auth.AuthRepository
 import com.efisuby.abl.data.auth.TokenStore
 import com.efisuby.abl.data.auth.keystoreCipher
 import com.efisuby.abl.data.db.AblDatabase
+import com.efisuby.abl.data.disk.BookDownloader
+import com.efisuby.abl.data.disk.CloudBookImporter
+import com.efisuby.abl.data.disk.CloudLibraryAdder
 import com.efisuby.abl.data.disk.DiskApi
+import com.efisuby.abl.data.disk.DownloadController
+import com.efisuby.abl.data.disk.DownloadScheduler
+import com.efisuby.abl.data.disk.MediaBookFinalizer
+import com.efisuby.abl.data.disk.WorkManagerDownloadScheduler
 import com.efisuby.abl.data.disk.DiskSource
 import com.efisuby.abl.data.importer.BookImporter
 import com.efisuby.abl.data.importer.BookStorage
@@ -71,7 +78,9 @@ class AppContainer(context: Context) {
             authOverride = value
         }
 
-    private val defaultDisk: DiskSource by lazy { DiskApi(OkHttpClient(), authRepository) }
+    private val httpClient: OkHttpClient by lazy { OkHttpClient() }
+    val diskApi: DiskApi by lazy { DiskApi(httpClient, authRepository) }
+    private val defaultDisk: DiskSource get() = diskApi
     private var diskOverride: DiskSource? = null
 
     /** A `var` so UI tests can serve a fake Disk tree. */
@@ -93,6 +102,44 @@ class AppContainer(context: Context) {
             ),
         )
     }
+
+    private val chapterAssembler by lazy {
+        Pair(
+            MediaMetadataTagReader(),
+            CascadingChapterReader(listOf(Media3ChapterReader(appContext), Mp4ChapterTrackReader())),
+        )
+    }
+
+    val cloudBookImporter: CloudBookImporter by lazy { CloudBookImporter(diskSource, bookStorage, libraryRepository) }
+
+    val bookDownloader: BookDownloader by lazy {
+        BookDownloader(
+            links = diskApi,
+            http = httpClient,
+            storage = bookStorage,
+            library = libraryRepository,
+            finalizer = MediaBookFinalizer(bookStorage, libraryRepository, chapterAssembler.first, chapterAssembler.second),
+        )
+    }
+
+    /** A `var` so tests can replace WorkManager with a fake. */
+    var downloadScheduler: DownloadScheduler = WorkManagerDownloadScheduler(appContext)
+
+    val downloadController: DownloadController by lazy {
+        DownloadController(
+            libraryRepository,
+            bookStorage,
+            settingsRepository,
+            // Looked up per call, so a scheduler swapped in by a test is used by an existing controller too.
+            object : DownloadScheduler {
+                override fun enqueue(bookId: String, wifiOnly: Boolean) = downloadScheduler.enqueue(bookId, wifiOnly)
+
+                override fun cancel(bookId: String) = downloadScheduler.cancel(bookId)
+            },
+        )
+    }
+
+    val cloudLibraryAdder: CloudLibraryAdder by lazy { CloudLibraryAdder(cloudBookImporter, downloadController) }
 
     val bookActions: BookActions by lazy { BookActions(libraryRepository, progressRepository, bookStorage) }
 

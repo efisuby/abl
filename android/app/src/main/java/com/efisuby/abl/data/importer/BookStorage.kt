@@ -92,6 +92,9 @@ class BookStorage(val root: File) {
     }
 
     /** Bytes taken by all books on the device. */
+    /** Bytes the book occupies on the device (audio, cover, manifest, partial files). */
+    fun bookBytes(bookId: String): Long = bookDir(bookId).walkBottomUp().filter { it.isFile }.sumOf { it.length() }
+
     fun usedBytes(): Long = root.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
 
     /** Removes everything stored for the book; used for failed imports and deletion. */

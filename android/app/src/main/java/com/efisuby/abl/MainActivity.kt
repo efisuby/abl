@@ -28,6 +28,8 @@ import com.efisuby.abl.ui.common.formatDuration
 import com.efisuby.abl.ui.common.labelRes
 import com.efisuby.abl.ui.common.loadCover
 import com.efisuby.abl.ui.importer.ImportActivity
+import com.efisuby.abl.ui.common.needsDownload
+import com.efisuby.abl.ui.common.offerDownload
 import com.efisuby.abl.ui.player.PlayerActivity
 import com.efisuby.abl.ui.cloud.CloudActivity
 import com.efisuby.abl.ui.settings.SettingsActivity
@@ -84,7 +86,9 @@ class MainActivity : AppCompatActivity() {
         binding.books.adapter = adapter
 
         val continuePlayback = View.OnClickListener {
-            viewModel.continueListening.value?.let { startActivity(PlayerActivity.intent(this, it.book.id)) }
+            viewModel.continueListening.value?.let {
+                if (it.book.needsDownload) offerDownload(it.book) else startActivity(PlayerActivity.intent(this, it.book.id))
+            }
         }
         binding.continueCard.setOnClickListener(continuePlayback)
         binding.continuePlay.setOnClickListener(continuePlayback)

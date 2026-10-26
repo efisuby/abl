@@ -97,27 +97,12 @@ class BookImporter(
         val metadata = MetadataResolver.resolveBook(source.displayName, firstTags, source.isFolder)
         val cover = saveCover(bookId, copiedFiles)
 
-        val chapters = mutableListOf<Chapter>()
-        for (file in copiedFiles) {
-            val tags = if (file === copiedFiles.first()) firstTags else tagReader.read(file.target)
-            val spans = ChapterBoundaries.build(chapterReader.read(file.target), tags.durationMs)
-            val relative = file.target.relativeTo(bookDir).invariantSeparatorsPath
-            for (span in spans) {
-                val title = when {
-                    spans.size > 1 -> TtsMarkup.strip(span.title) ?: "${chapters.size + 1}"
-                    else -> MetadataResolver.chapterTitle(file.source.name, tags)
-                }
-                chapters += Chapter(
-                    id = chapterId(bookId, relative, span.startMs),
-                    bookId = bookId,
-                    chapterIndex = chapters.size,
-                    title = title,
-                    filePath = file.target.absolutePath,
-                    startMs = span.startMs,
-                    durationMs = span.durationMs,
-                )
-            }
-        }
+        val chapters = ChapterAssembler(tagReader, chapterReader).assemble(
+            bookId,
+            bookDir,
+            copiedFiles.map { AssembleFile(it.target, it.source.name) },
+            firstTags,
+        )
 
         val book = Book(
             id = bookId,
@@ -189,6 +174,6 @@ class BookImporter(
          * is rebuilt from its manifest or re-imported under the same id.
          */
         fun chapterId(bookId: String, relativeFile: String, startMs: Long): String =
-            UUID.nameUUIDFromBytes("$bookId/$relativeFile#$startMs".toByteArray()).toString()
+            ChapterAssembler.chapterId(bookId, relativeFile, startMs)
     }
 }

@@ -23,6 +23,11 @@ interface DiskSource {
     suspend fun list(path: String, limit: Int = 100, offset: Int = 0): DiskItems
 }
 
+/** Pre-signed download links; faked in tests. */
+interface DiskLinks {
+    suspend fun downloadLink(path: String): DiskLink
+}
+
 /** Every entry of one level, paging through large folders. */
 suspend fun DiskSource.listAll(path: String, pageSize: Int = 100): List<DiskResource> {
     val all = mutableListOf<DiskResource>()
@@ -45,7 +50,7 @@ class DiskApi(
     private val backoffMs: Long = 1_000,
     /** Replaced in tests so backoff does not slow them down. */
     private val sleep: suspend (Long) -> Unit = { delay(it) },
-) : DiskSource {
+) : DiskSource, DiskLinks {
 
     private val base: HttpUrl = baseUrl.toHttpUrl()
 
@@ -66,7 +71,7 @@ class DiskApi(
         get(resourcesUrl().newBuilder().addQueryParameter("path", path).build(), path)
 
     /** A temporary link to download the file at [path]; the file itself is fetched without the token. */
-    suspend fun downloadLink(path: String): DiskLink =
+    override suspend fun downloadLink(path: String): DiskLink =
         get(resourcesUrl("download").newBuilder().addQueryParameter("path", path).build(), path)
 
     suspend fun uploadLink(path: String, overwrite: Boolean = true): DiskLink =

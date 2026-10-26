@@ -48,6 +48,8 @@ data class ManifestFile(
     val path: String,
     val sizeBytes: Long,
     val md5: String,
+    /** Path of the file on Yandex Disk; null for locally imported books. */
+    val remote: String? = null,
 )
 
 object BookManifestCodec {

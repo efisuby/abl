@@ -120,6 +120,21 @@ class BookActionsTest {
         assertEquals(0, actions.removeDownloads())
     }
 
+    @Test
+    fun `removing one download frees its audio, keeps the cloud book and ignores imported books`() = runBlocking {
+        val cloud = Book(id = "c1", title = "Cloud", source = BookSource.YANDEX_DISK, remotePath = "/Books/Cloud", addedAt = 1)
+        library.books[cloud.id] = cloud
+        storage.audioFile(cloud.id, "01.mp3").apply { parentFile!!.mkdirs(); writeText("audio") }
+
+        actions.removeDownload(book.id) // an imported book has no cloud copy
+        assertTrue(storage.audioFile(book.id, "01.mp3").isFile)
+
+        actions.removeDownload(cloud.id)
+
+        assertEquals(DownloadState.IN_CLOUD, library.books.getValue(cloud.id).downloadState)
+        assertFalse(storage.audioDir(cloud.id).exists())
+    }
+
     private class FakeLibrary : LibraryRepository {
         val books = mutableMapOf<String, Book>()
         override fun observeBooks(): Flow<List<Book>> = flow { emit(books.values.toList()) }

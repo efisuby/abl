@@ -1,6 +1,7 @@
 package com.efisuby.abl.ui.book
 
 import android.graphics.Typeface
+import android.text.format.Formatter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,7 +16,10 @@ import com.efisuby.abl.databinding.ItemBookHeaderBinding
 import com.efisuby.abl.databinding.ItemBookmarkBinding
 import com.efisuby.abl.databinding.ItemChapterBinding
 import com.efisuby.abl.databinding.ItemSectionBinding
+import com.efisuby.abl.domain.model.Book
+import com.efisuby.abl.domain.model.BookSource
 import com.efisuby.abl.domain.model.BookStatus
+import com.efisuby.abl.domain.model.DownloadState
 import com.efisuby.abl.domain.model.Bookmark
 import com.efisuby.abl.domain.model.Chapter
 import com.efisuby.abl.ui.common.formatDuration
@@ -32,6 +36,9 @@ interface BookScreenActions {
     fun onBookmark(bookmark: Bookmark)
     fun onDeleteBookmark(bookmark: Bookmark)
     fun onChangeStatus(anchor: View)
+
+    /** Download button of a cloud book: start, cancel or remove, depending on its state. */
+    fun onDownloadAction()
 }
 
 /** The book header, its bookmarks (when there are any) and its chapters. */
@@ -116,6 +123,15 @@ class BookAdapter(
                 formatDuration(book.totalDurationMs),
             )
 
+            binding.size.text = state.size?.let {
+                context.getString(
+                    if (it.onDevice) R.string.book_size_device else R.string.book_size_cloud,
+                    Formatter.formatFileSize(context, it.bytes),
+                )
+            }
+            binding.size.isVisible = state.size != null
+            bindDownload(book)
+
             val current = state.chapters.indexOfFirst { it.id == state.currentChapterId }
             val started = book.status == BookStatus.IN_PROGRESS && current >= 0
             binding.progressText.isVisible = started
@@ -132,6 +148,18 @@ class BookAdapter(
                 val size = context.resources.getDimensionPixelSize(R.dimen.book_cover_size)
                 coverJob = scope.launch { binding.cover.setImageBitmap(loadCover(book.coverPath, size)) }
             }
+        }
+
+        private fun bindDownload(book: Book) {
+            val label = when {
+                book.source != BookSource.YANDEX_DISK -> null
+                book.downloadState == DownloadState.DOWNLOADING -> R.string.download_cancel_button
+                book.downloadState == DownloadState.DOWNLOADED -> R.string.download_remove_button
+                else -> R.string.download_start
+            }
+            binding.download.isVisible = label != null
+            label?.let(binding.download::setText)
+            binding.download.setOnClickListener { actions.onDownloadAction() }
         }
     }
 

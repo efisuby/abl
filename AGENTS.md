@@ -55,6 +55,7 @@
 - **Test fixtures**: `app/src/androidTest/assets/fixtures/` (ffmpeg-generated, also on the JVM test classpath). SAF tests use `FixtureDocumentsProvider` + `MockContentResolver` (`useLibrary("android.test.mock")`). `M4bSpikeTest` runs only if real books are in `/data/local/tmp/abl-spike/`.
 - **Dark-only, Russian-only** (app-shell spec): `AblApplication` forces `MODE_NIGHT_YES` (so system bar icons stay light under edge-to-edge) and the app locale `ru` (`LocaleManager` on 33+, so library strings are Russian too); theme parent `Theme.Material3.Dark`. Only `values/strings.xml`, never add other locales. On 33+ `Resources.getSystem()` reports the app locale — use `LocaleManager.systemLocales` for the device language.
 - **Settings screen** (`ui/settings/`): Wi-Fi only, storage size + «Удалить все загрузки» (`BookActions.removeDownloads()`: only `YANDEX_DISK` books in DOWNLOADED/PARTIAL → state IN_CLOUD, `audio/` removed, manifest and cover kept; `PlaybackService` stops a book that is no longer DOWNLOADED), last sync time, account placeholder (sign-out is task 6.3). Entry: overflow menu of the library. `MainActivity` = toolbar search + status/source/sort chips + «Продолжить слушать» card + library with series headers, status and % + empty states; `BookActivity` = header (series, progress, status popup) + bookmarks + chapters, menu edit/delete; `EditBookActivity` = metadata + cover (`PickVisualMedia`, scaled ≤1024 px JPEG); `PlayerActivity` accepts chapter + position (bookmarks). Shared UI-test helpers: `androidTest/.../ui/UiTestSupport.kt`.
+- **Cloud books & downloads (`data/disk/`)**: `CloudBookImporter` makes an `IN_CLOUD` record (bookId = hash of the remote path, placeholder chapters, `book.json` with `ManifestFile.remote`/size/md5); `CloudLibraryAdder` = import + `DownloadController.start` (free-space check, 50 MB headroom, then `DownloadWorker` via `DownloadScheduler`; Wi-Fi only → `UNMETERED`). `BookDownloader` resumes `.part` by `Range`, verifies md5, then `MediaBookFinalizer` reads tags/chapters/cover and sets `DOWNLOADED`. Cancel by the user = state flips to `IN_CLOUD` *first*, then the worker drops `audio/`; a system stop keeps `.part`. UI: `Book.needsDownload` blocks play (`offerDownload`) in the book screen and the «Продолжить» card. `AppContainer.downloadScheduler` is a `var` for tests (the controller looks it up per call).
 - OpenSpec: all artifacts in English (`openspec/config.yaml`); every task must state how it is verified. `openspec/specs/` is empty until change 001 is archived.
 
 ---
@@ -118,7 +119,7 @@ cd /home/spell/src/abl && openspec validate 001-android-audiobook-player --stric
 
 ## Handoff Notes for Next Agent
 
-1. **Status (2026-10-25):** Groups 1–5 complete (3.1, 3.4, 3.9 checked manually on the S24+). Next: group 6 (Yandex authorization).
+1. **Status (2026-10-26):** Groups 1–6 and 7.1–7.6 complete; 7.7 waits for a manual low-space check on the S24+ (also try a ≥500 MB download there).
 2. **m4b spike done** — `docs/spikes/m4b-chapters.md`; sample has no Audible/iTunes m4b yet.
 3. **Backup rules are verified** — don't remove them. The A/B test proved exclusion works.
 4. **Signing is stable** — debug and release use the same release key. OAuth fingerprint won't change.

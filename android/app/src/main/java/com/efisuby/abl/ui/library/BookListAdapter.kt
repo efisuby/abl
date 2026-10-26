@@ -14,6 +14,7 @@ import com.efisuby.abl.domain.model.Book
 import com.efisuby.abl.domain.model.BookStatus
 import com.efisuby.abl.ui.common.formatDuration
 import com.efisuby.abl.ui.common.labelRes
+import com.efisuby.abl.ui.common.needsDownload
 import com.efisuby.abl.ui.common.loadCover
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -78,11 +79,14 @@ class BookListAdapter(
             ).joinToString(" · ")
 
             val status = context.getString(book.status.labelRes())
-            binding.status.text = if (book.status == BookStatus.IN_PROGRESS) {
+            val statusText = if (book.status == BookStatus.IN_PROGRESS) {
                 context.getString(R.string.status_with_percent, status, item.percent)
             } else {
                 status
             }
+            // Cloud books that are not (fully) on the device say so next to the listening status.
+            val cloud = book.downloadState.labelRes()?.takeIf { book.needsDownload }?.let(context::getString)
+            binding.status.text = listOfNotNull(statusText, cloud).joinToString(" · ")
             binding.progress.isVisible = book.status == BookStatus.IN_PROGRESS
             binding.progress.progress = item.percent
 

@@ -122,6 +122,7 @@ dependencies {
 
     // Yandex Disk REST client
     implementation(libs.okhttp)
+    implementation(libs.androidx.work.runtime)
 
     // Local persistence
     implementation(libs.androidx.room.runtime)

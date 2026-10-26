@@ -21,8 +21,12 @@ import com.efisuby.abl.databinding.ActivityBookBinding
 import com.efisuby.abl.domain.model.BookStatus
 import com.efisuby.abl.domain.model.Bookmark
 import com.efisuby.abl.domain.model.Chapter
+import com.efisuby.abl.domain.model.DownloadState
 import com.efisuby.abl.ui.common.applySystemBarInsets
 import com.efisuby.abl.ui.common.labelRes
+import com.efisuby.abl.ui.common.needsDownload
+import com.efisuby.abl.ui.common.offerDownload
+import com.efisuby.abl.ui.common.startDownload
 import com.efisuby.abl.ui.edit.EditBookActivity
 import com.efisuby.abl.ui.player.PlayerActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -48,6 +52,8 @@ class BookActivity : AppCompatActivity(), BookScreenActions {
                     container.progressRepository,
                     container.bookmarkRepository,
                     container.bookActions,
+                    container.bookStorage,
+                    container.downloadController,
                     container.applicationScope,
                     bookId,
                 )
@@ -91,11 +97,41 @@ class BookActivity : AppCompatActivity(), BookScreenActions {
     }
 
     override fun onPlay(chapter: Chapter?) {
-        startActivity(PlayerActivity.intent(this, bookId, chapter?.id))
+        if (!offerDownloadIfNeeded()) startActivity(PlayerActivity.intent(this, bookId, chapter?.id))
     }
 
     override fun onBookmark(bookmark: Bookmark) {
-        startActivity(PlayerActivity.intent(this, bookId, bookmark.chapterId, bookmark.positionMs))
+        if (!offerDownloadIfNeeded()) {
+            startActivity(PlayerActivity.intent(this, bookId, bookmark.chapterId, bookmark.positionMs))
+        }
+    }
+
+    /** A cloud book that is not on the device cannot play: offer to download it instead. */
+    private fun offerDownloadIfNeeded(): Boolean {
+        val book = viewModel.state.value.book?.takeIf { it.needsDownload } ?: return false
+        offerDownload(book)
+        return true
+    }
+
+    override fun onDownloadAction() {
+        val book = viewModel.state.value.book ?: return
+        when (book.downloadState) {
+            DownloadState.DOWNLOADING -> viewModel.cancelDownload()
+            DownloadState.DOWNLOADED -> confirmRemoveDownload(book.title)
+            else -> startDownload(bookId)
+        }
+    }
+
+    private fun confirmRemoveDownload(title: String) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.download_remove_button)
+            .setMessage(getString(R.string.download_remove_message, title))
+            .setPositiveButton(R.string.settings_remove_downloads_confirm) { _, _ ->
+                viewModel.removeDownload()
+                Toast.makeText(this, R.string.download_removed, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(R.string.bookmark_cancel, null)
+            .show()
     }
 
     override fun onDeleteBookmark(bookmark: Bookmark) {
