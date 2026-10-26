@@ -73,6 +73,11 @@ android {
     // MockContentResolver: serves a fixture documents provider to the SAF import tests.
     useLibrary("android.test.mock")
 
+    lint {
+        // Versions are pinned on purpose (Kotlin/KSP/Room/Media3 move together); upgrades are a decision, not a warning.
+        disable += setOf("AndroidGradlePluginVersion", "GradleDependency", "NewerVersionAvailable")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

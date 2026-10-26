@@ -1,6 +1,7 @@
 package com.efisuby.abl.data.repository
 
 import android.content.Context
+import androidx.core.content.edit
 import java.util.UUID
 
 /**
@@ -16,7 +17,8 @@ class DeviceIdProvider(context: Context) {
     fun deviceId(): String {
         preferences.getString(KEY_DEVICE_ID, null)?.let { return it }
         val generated = UUID.randomUUID().toString()
-        preferences.edit().putString(KEY_DEVICE_ID, generated).commit()
+        // Synchronous on purpose: the id must be on disk before anything is published under it.
+        preferences.edit(commit = true) { putString(KEY_DEVICE_ID, generated) }
         return generated
     }
 

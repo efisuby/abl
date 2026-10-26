@@ -1,5 +1,6 @@
 package com.efisuby.abl.data.disk
 
+import android.annotation.SuppressLint
 import androidx.work.NetworkType
 import com.efisuby.abl.data.importer.BookManifestCodec
 import com.efisuby.abl.data.importer.BookStorage
@@ -34,7 +35,11 @@ sealed interface StartResult {
     data object Unavailable : StartResult
 }
 
-/** Start and cancel downloads of cloud books, with the free-space guard. */
+/**
+ * Start and cancel downloads of cloud books, with the free-space guard. The guard counts plain
+ * usable space, not clearable cache: a conservative answer is what a multi-gigabyte download needs.
+ */
+@SuppressLint("UsableSpace")
 class DownloadController(
     private val library: LibraryRepository,
     private val storage: BookStorage,

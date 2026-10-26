@@ -46,7 +46,7 @@ Tags: `MediaMetadataRetriever`, then QuickTime `keys` for m4a/m4b/mp4, then the 
 ## Open points
 
 - The sample contains no Audible/iTunes-encoded m4b. If one shows chapters only in a form neither reader handles, it degrades to one chapter without losing playback.
-- Series and series number: neither the platform retriever nor Media3 exposes a series tag, and no file in the sample carries one.
+- Series and series number: neither the platform retriever nor Media3 exposes a series tag, and no file in the sample carries one. Resolved after the spike: `Id3Frames` (ID3v2.3/2.4 `TXXX`) and `Mp4Tags` (`----` free-form, `©mvn`/`©mvi`, `mdta` keys) feed `MediaMetadataTagReader`; the index is the first number of the part tag. Still untested on real Audible/iTunes files.
 
 ## Verification
 

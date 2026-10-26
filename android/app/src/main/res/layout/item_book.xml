@@ -4,7 +4,7 @@
     android:id="@+id/bookRow"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
+    android:foreground="?attr/selectableItemBackground"
     android:baselineAligned="false"
     android:gravity="center_vertical"
     android:orientation="horizontal"

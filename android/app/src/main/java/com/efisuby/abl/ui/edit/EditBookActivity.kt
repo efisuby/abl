@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import java.util.Locale
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -90,7 +91,7 @@ class EditBookActivity : AppCompatActivity() {
         binding.authorField.setText(book.author)
         binding.narratorField.setText(book.narrator)
         binding.seriesField.setText(book.series)
-        binding.seriesIndexField.setText(book.seriesIndex?.toString())
+        binding.seriesIndexField.setText(book.seriesIndex?.let { String.format(Locale.ROOT, "%d", it) })
     }
 
     private fun save() {

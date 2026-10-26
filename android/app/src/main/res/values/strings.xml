@@ -153,7 +153,6 @@
     <string name="cloud_reauth_prompt">Сессия истекла. Войдите снова — локальные книги остаются доступными.</string>
     <string name="cloud_sign_in">Войти через Яндекс</string>
     <string name="cloud_folder">Папка</string>
-    <string name="cloud_download">Скачать</string>
     <string name="cloud_download_item">Скачать: %1$s</string>
     <string name="cloud_download_folder">Скачать эту папку</string>
     <string name="cloud_added">Книга добавлена, загрузка началась</string>
