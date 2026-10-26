@@ -1,6 +1,9 @@
 package com.efisuby.abl.di
 
 import android.content.Context
+import com.efisuby.abl.data.auth.AuthRepository
+import com.efisuby.abl.data.auth.TokenStore
+import com.efisuby.abl.data.auth.keystoreCipher
 import com.efisuby.abl.data.db.AblDatabase
 import com.efisuby.abl.data.importer.BookImporter
 import com.efisuby.abl.data.importer.BookStorage
@@ -50,6 +53,11 @@ class AppContainer(context: Context) {
 
     val settingsRepository: SettingsRepository by lazy {
         SettingsRepository(appContext.settingsDataStore)
+    }
+
+    /** Yandex OAuth token: encrypted with a Keystore key, in the no-backup directory. */
+    val authRepository: AuthRepository by lazy {
+        AuthRepository(TokenStore(File(appContext.noBackupFilesDir, "yandex-token.bin"), keystoreCipher("abl-yandex-token")))
     }
 
     val bookStorage: BookStorage by lazy { BookStorage(File(appContext.filesDir, "books")) }

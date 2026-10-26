@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -16,6 +17,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.efisuby.abl.R
 import com.efisuby.abl.appContainer
+import com.efisuby.abl.data.auth.AuthState
 import com.efisuby.abl.databinding.ActivitySettingsBinding
 import com.efisuby.abl.ui.common.applySystemBarInsets
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -23,7 +25,7 @@ import kotlinx.coroutines.launch
 
 /**
  * "Wi-Fi only", storage with "Delete all downloads", synchronization state and the Yandex
- * account. Sign-in and sign-out arrive with authorization (group 6).
+ * account (sign-in lives in the cloud section, sign-out here).
  */
 class SettingsActivity : AppCompatActivity() {
 
@@ -32,7 +34,7 @@ class SettingsActivity : AppCompatActivity() {
     private val viewModel: SettingsViewModel by viewModels {
         viewModelFactory {
             initializer {
-                with(appContainer) { SettingsViewModel(settingsRepository, libraryRepository, bookStorage, bookActions) }
+                with(appContainer) { SettingsViewModel(settingsRepository, libraryRepository, bookStorage, bookActions, authRepository) }
             }
         }
     }
@@ -50,6 +52,7 @@ class SettingsActivity : AppCompatActivity() {
             if (checked != viewModel.state.value?.wifiOnly) viewModel.setWifiOnly(checked)
         }
         binding.removeDownloads.setOnClickListener { confirmRemoveDownloads() }
+        binding.signOut.setOnClickListener { confirmSignOut() }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -67,6 +70,14 @@ class SettingsActivity : AppCompatActivity() {
     private fun render(state: SettingsUiState) {
         binding.wifiOnly.isChecked = state.wifiOnly
         binding.storageUsed.text = getString(R.string.settings_storage_used, Formatter.formatShortFileSize(this, state.usedBytes))
+        binding.account.setText(
+            when (state.auth) {
+                AuthState.SIGNED_IN -> R.string.settings_account_signed_in
+                AuthState.REAUTH_REQUIRED -> R.string.settings_account_reauth
+                AuthState.SIGNED_OUT -> R.string.settings_account_signed_out
+            },
+        )
+        binding.signOut.isVisible = state.auth == AuthState.SIGNED_IN
         binding.removeDownloads.isEnabled = state.removableBooks > 0
         binding.lastSync.text = state.lastSyncAt?.let {
             getString(
@@ -74,6 +85,15 @@ class SettingsActivity : AppCompatActivity() {
                 DateUtils.formatDateTime(this, it, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME),
             )
         } ?: getString(R.string.settings_sync_never)
+    }
+
+    private fun confirmSignOut() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.settings_sign_out_title)
+            .setMessage(R.string.settings_sign_out_message)
+            .setNegativeButton(R.string.bookmark_cancel, null)
+            .setPositiveButton(R.string.settings_sign_out) { _, _ -> viewModel.signOut() }
+            .show()
     }
 
     private fun confirmRemoveDownloads() {

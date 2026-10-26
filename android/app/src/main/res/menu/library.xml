@@ -8,6 +8,10 @@
         app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="ifRoom|collapseActionView" />
     <item
+        android:id="@+id/cloud"
+        android:title="@string/cloud_title"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/settings"
         android:title="@string/settings_title"
         app:showAsAction="never" />

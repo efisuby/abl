@@ -2,6 +2,8 @@ package com.efisuby.abl.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.efisuby.abl.data.auth.AuthRepository
+import com.efisuby.abl.data.auth.AuthState
 import com.efisuby.abl.data.importer.BookStorage
 import com.efisuby.abl.data.repository.BookActions
 import com.efisuby.abl.data.settings.SettingsRepository
@@ -28,6 +30,7 @@ data class SettingsUiState(
     val usedBytes: Long,
     /** Cloud books whose audio "Delete all downloads" would remove. */
     val removableBooks: Int,
+    val auth: AuthState,
 )
 
 class SettingsViewModel(
@@ -35,6 +38,7 @@ class SettingsViewModel(
     library: LibraryRepository,
     private val storage: BookStorage,
     private val actions: BookActions,
+    private val auth: AuthRepository,
 ) : ViewModel() {
 
     /** Bumped after a cleanup: files go after the database update, so the size is measured again. */
@@ -46,7 +50,7 @@ class SettingsViewModel(
         .flowOn(Dispatchers.IO)
 
     /** Null until loaded. */
-    val state: StateFlow<SettingsUiState?> = combine(settings.settings, library.observeBooks(), usedBytes) { prefs, books, bytes ->
+    val state: StateFlow<SettingsUiState?> = combine(settings.settings, library.observeBooks(), usedBytes, auth.state) { prefs, books, bytes, authState ->
         SettingsUiState(
             wifiOnly = prefs.wifiOnly,
             lastSyncAt = prefs.lastSyncAt,
@@ -54,6 +58,7 @@ class SettingsViewModel(
             removableBooks = books.count {
                 it.source == BookSource.YANDEX_DISK && it.downloadState != DownloadState.IN_CLOUD
             },
+            auth = authState,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -65,6 +70,8 @@ class SettingsViewModel(
     fun setWifiOnly(enabled: Boolean) {
         viewModelScope.launch { settings.setWifiOnly(enabled) }
     }
+
+    fun signOut() = auth.signOut()
 
     fun removeDownloads() {
         viewModelScope.launch {

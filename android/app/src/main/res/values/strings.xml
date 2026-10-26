@@ -140,4 +140,17 @@
     <string name="settings_sync_last">Последняя синхронизация: %1$s</string>
     <string name="settings_account">Аккаунт Яндекса</string>
     <string name="settings_account_signed_out">Вход не выполнен</string>
+    <string name="settings_account_signed_in">Вы вошли в Яндекс</string>
+    <string name="settings_account_reauth">Нужно войти снова</string>
+    <string name="settings_sign_out">Выйти</string>
+    <string name="settings_sign_out_title">Выйти из аккаунта?</string>
+    <string name="settings_sign_out_message">Токен будет удалён с устройства. Локальные книги, прогресс и закладки сохранятся.</string>
+
+    <string name="cloud_title">Облако</string>
+    <string name="cloud_sign_in_prompt">Войдите в Яндекс, чтобы слушать книги с Яндекс.Диска</string>
+    <string name="cloud_reauth_prompt">Сессия истекла. Войдите снова — локальные книги остаются доступными.</string>
+    <string name="cloud_sign_in">Войти через Яндекс</string>
+    <string name="cloud_signed_in">Вход выполнен. Список книг появится здесь.</string>
+    <string name="cloud_sign_in_cancelled">Вход отменён</string>
+    <string name="cloud_sign_in_failed">Не удалось войти. Проверьте соединение и попробуйте ещё раз.</string>
 </resources>

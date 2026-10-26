@@ -46,6 +46,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".ui.cloud.CloudActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.player.PlayerActivity"
             android:exported="false"
             android:launchMode="singleTop" />

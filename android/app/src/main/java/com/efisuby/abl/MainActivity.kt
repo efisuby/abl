@@ -29,6 +29,7 @@ import com.efisuby.abl.ui.common.labelRes
 import com.efisuby.abl.ui.common.loadCover
 import com.efisuby.abl.ui.importer.ImportActivity
 import com.efisuby.abl.ui.player.PlayerActivity
+import com.efisuby.abl.ui.cloud.CloudActivity
 import com.efisuby.abl.ui.settings.SettingsActivity
 import com.efisuby.abl.ui.library.BookListAdapter
 import com.efisuby.abl.ui.library.ContinueListening
@@ -70,8 +71,11 @@ class MainActivity : AppCompatActivity() {
         setUpSearch()
         setUpFilters()
         binding.toolbar.setOnMenuItemClickListener { item ->
-            if (item.itemId != R.id.settings) return@setOnMenuItemClickListener false
-            startActivity(SettingsActivity.intent(this))
+            when (item.itemId) {
+                R.id.settings -> startActivity(SettingsActivity.intent(this))
+                R.id.cloud -> startActivity(CloudActivity.intent(this))
+                else -> return@setOnMenuItemClickListener false
+            }
             true
         }
 
