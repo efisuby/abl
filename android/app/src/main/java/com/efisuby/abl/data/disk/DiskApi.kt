@@ -12,6 +12,7 @@ import okhttp3.Callback
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
@@ -94,11 +95,20 @@ class DiskApi(
     }
 
     /** On the IO dispatcher: reading and closing the body is blocking, and the caller may be on Main. */
-    private suspend fun execute(url: HttpUrl, path: String): String = withContext(Dispatchers.IO) {
-        executeBlocking(url, path)
+    private suspend fun execute(url: HttpUrl, path: String, method: String = "GET"): String = withContext(Dispatchers.IO) {
+        executeBlocking(url, path, method)
     }
 
-    private suspend fun executeBlocking(url: HttpUrl, path: String): String {
+    /** Creates a folder; an existing one is fine. */
+    suspend fun createFolder(path: String) {
+        try {
+            execute(resourcesUrl().newBuilder().addQueryParameter("path", path).build(), path, method = "PUT")
+        } catch (e: DiskException.Http) {
+            if (e.code != 409) throw e // 409: the folder is already there
+        }
+    }
+
+    private suspend fun executeBlocking(url: HttpUrl, path: String, method: String = "GET"): String {
         var attempt = 0
         while (true) {
             // The token is read per attempt: a sign-out between retries must stop the request.
@@ -107,6 +117,7 @@ class DiskApi(
                 .url(url)
                 .header("Authorization", "OAuth $token")
                 .header("Accept", "application/json")
+                .method(method, if (method == "GET") null else ByteArray(0).toRequestBody())
                 .build()
             client.newCall(request).await().use { response ->
                 when (val code = response.code) {
