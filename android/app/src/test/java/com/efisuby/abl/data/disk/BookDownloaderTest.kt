@@ -1,6 +1,9 @@
 package com.efisuby.abl.data.disk
 
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.efisuby.abl.data.importer.BookStorage
+import com.efisuby.abl.data.settings.SettingsRepository
+import com.efisuby.abl.data.importer.DownloadFailure
 import com.efisuby.abl.domain.model.DownloadState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
@@ -80,6 +83,15 @@ class BookDownloaderTest {
     private fun addBook(md5: String = this.md5, state: DownloadState = DownloadState.DOWNLOADING) =
         library.addCloudBook(storage, state = state, files = listOf(Triple("book.mp3", data.size.toLong(), md5)))
 
+    private fun controller(): DownloadController {
+        val store = PreferenceDataStoreFactory.create(produceFile = { folder.root.resolve("settings.preferences_pb") })
+        val scheduler = object : DownloadScheduler {
+            override fun enqueue(bookId: String, wifiOnly: Boolean) = Unit
+            override fun cancel(bookId: String) = Unit
+        }
+        return DownloadController(library, storage, SettingsRepository(store), scheduler, freeSpace = { Long.MAX_VALUE })
+    }
+
     private val target get() = storage.audioFile("cloud-book", "book.mp3")
     private val part get() = storage.audioFile("cloud-book", "book.mp3.part")
 
@@ -121,8 +133,9 @@ class BookDownloaderTest {
         serve()
         addBook(md5 = "0".repeat(32))
 
-        assertThrows(ChecksumMismatchException::class.java) { runBlocking { downloader().run("cloud-book") } }
+        val error = assertThrows(FileDownloadException::class.java) { runBlocking { downloader().run("cloud-book") } }
 
+        assertTrue(error.cause is ChecksumMismatchException)
         assertFalse(target.exists())
         assertFalse(part.exists())
     }
@@ -168,5 +181,52 @@ class BookDownloaderTest {
         storage.audioFile("cloud-book", "a.mp3").apply { parentFile!!.mkdirs(); writeBytes(byteArrayOf(1, 2, 3)) }
         downloader.markFailed("cloud-book")
         assertEquals(DownloadState.PARTIAL, library.books.getValue("cloud-book").downloadState)
+    }
+
+    @Test
+    fun serverErrorNamesTheFileAndItsCode() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest) =
+                if (request.getHeader("X-Test") == null && server.requestCount == 2) MockResponse().setResponseCode(500)
+                else MockResponse().setBody(Buffer().write(data))
+        }
+        library.addCloudBook(storage, files = listOf(Triple("a.mp3", data.size.toLong(), md5), Triple("b.mp3", data.size.toLong(), md5)))
+
+        val error = assertThrows(FileDownloadException::class.java) { runBlocking { downloader().run("cloud-book") } }
+
+        assertEquals("audio/b.mp3", error.file)
+        assertEquals(500, error.code)
+        assertFalse("a failed file is not retried as an I/O error", RetryPolicy.isStuck(null, DownloadFailure(error.file, error.code)))
+        assertTrue(storage.audioFile("cloud-book", "a.mp3").exists())
+    }
+
+    @Test
+    fun skippedFileIsLeftOutAndTheBookIsFinalized() = runBlocking {
+        serve()
+        library.addCloudBook(storage, files = listOf(Triple("a.mp3", data.size.toLong(), md5), Triple("b.mp3", data.size.toLong(), md5)))
+        val controller = controller()
+        controller.skipFile("cloud-book", "audio/b.mp3")
+
+        downloader().run("cloud-book")
+
+        assertTrue(storage.audioFile("cloud-book", "a.mp3").exists())
+        assertFalse(storage.audioFile("cloud-book", "b.mp3").exists())
+        assertEquals(1, server.requestCount)
+        assertEquals(DownloadState.DOWNLOADED, library.books.getValue("cloud-book").downloadState)
+        assertEquals(0L, controller.remainingBytes("cloud-book"))
+    }
+
+    @Test
+    fun successClearsTheRecordedFailure() = runBlocking {
+        serve()
+        addBook()
+        val downloader = downloader()
+        downloader.recordFailure("cloud-book", DownloadFailure("audio/book.mp3", 500))
+        val controller = controller()
+        assertEquals(500, controller.failure("cloud-book")?.code)
+
+        downloader.run("cloud-book")
+
+        assertEquals(null, controller.failure("cloud-book"))
     }
 }

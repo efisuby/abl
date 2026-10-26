@@ -3,6 +3,7 @@ package com.efisuby.abl.data.disk
 import com.efisuby.abl.data.importer.BookManifest
 import com.efisuby.abl.data.importer.BookManifestCodec
 import com.efisuby.abl.data.importer.BookStorage
+import com.efisuby.abl.data.importer.DownloadFailure
 import com.efisuby.abl.domain.model.Book
 import com.efisuby.abl.domain.model.DownloadState
 import com.efisuby.abl.domain.repository.LibraryRepository
@@ -28,6 +29,21 @@ fun interface BookFinalizer {
 }
 
 class ChecksumMismatchException(path: String) : IOException("md5 of $path does not match")
+
+/** The file server answered [code] instead of the bytes. */
+class DownloadHttpException(val code: Int) : IOException("Download answered HTTP $code")
+
+/** A download stopped on [file] (path relative to the book directory); [cause] says why. */
+class FileDownloadException(val file: String, override val cause: Exception) : IOException("Cannot download $file: ${cause.message}", cause) {
+
+    /** The HTTP status behind the failure, if the server was reached. */
+    val code: Int? get() = when (cause) {
+        is DownloadHttpException -> cause.code
+        is DiskException.Http -> cause.code
+        is DiskException.NotFound -> 404
+        else -> null
+    }
+}
 
 /** Bytes done and total over all files of the book. */
 fun interface DownloadProgress {
@@ -77,10 +93,11 @@ class BookDownloader(
         val manifest = withContext(ioDispatcher) { BookManifestCodec.read(storage.manifestFile(bookId)) }
         library.setDownloadState(bookId, DownloadState.DOWNLOADING)
 
-        val total = manifest.files.sumOf { it.sizeBytes }
+        val wanted = manifest.files.filterNot { it.skipped }
+        val total = wanted.sumOf { it.sizeBytes }
         var done = 0L
         progress.onBytes(done, total)
-        for (file in manifest.files) {
+        for (file in wanted) {
             val target = File(bookDir, file.path)
             if (target.isFile && target.length() == file.sizeBytes) {
                 done += file.sizeBytes
@@ -88,14 +105,23 @@ class BookDownloader(
                 continue
             }
             val base = done
-            withContext(ioDispatcher) {
-                downloadFile(requireNotNull(file.remote) { "No remote path for ${file.path}" }, target, file.sizeBytes, file.md5) {
-                    progress.onBytes(base + it, total)
+            try {
+                withContext(ioDispatcher) {
+                    downloadFile(requireNotNull(file.remote) { "No remote path for ${file.path}" }, target, file.sizeBytes, file.md5) {
+                        progress.onBytes(base + it, total)
+                    }
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: IOException) {
+                throw FileDownloadException(file.path, e)
+            } catch (e: DiskException) {
+                throw FileDownloadException(file.path, e)
             }
             done += file.sizeBytes
         }
         finalizer.finalize(book, manifest, bookDir)
+        withContext(ioDispatcher) { writeFailure(bookId, null) }
         library.setDownloadState(bookId, DownloadState.DOWNLOADED)
     }
 
@@ -121,7 +147,7 @@ class BookDownloader(
         }.build()
         http.newCall(request).execute().use { response ->
             val resume = response.code == 206 && offset > 0
-            if (!response.isSuccessful) throw IOException("Download answered HTTP ${response.code}")
+            if (!response.isSuccessful) throw DownloadHttpException(response.code)
             val body = response.body ?: throw IOException("Empty download response")
             RandomAccessFile(part, "rw").use { out ->
                 val start = if (resume) offset else 0L
@@ -158,13 +184,24 @@ class BookDownloader(
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
+    /** Remembers (or with null clears) why the download stopped, in `book.json`. */
+    suspend fun recordFailure(bookId: String, failure: DownloadFailure?) {
+        withContext(ioDispatcher) { writeFailure(bookId, failure) }
+    }
+
+    private fun writeFailure(bookId: String, failure: DownloadFailure?) {
+        val manifest = runCatching { BookManifestCodec.read(storage.manifestFile(bookId)) }.getOrNull() ?: return
+        if (manifest.downloadFailure == failure) return
+        BookManifestCodec.write(manifest.copy(downloadFailure = failure), storage.manifestFile(bookId))
+    }
+
     /** After a failure that will not be retried: keeps what is complete and tells the library. */
     suspend fun markFailed(bookId: String) {
         val manifest = withContext(ioDispatcher) {
             runCatching { BookManifestCodec.read(storage.manifestFile(bookId)) }.getOrNull()
         }
         val bookDir = storage.bookDir(bookId)
-        val anyComplete = manifest?.files?.any { File(bookDir, it.path).let { f -> f.isFile && f.length() == it.sizeBytes } } == true
+        val anyComplete = manifest?.files?.filterNot { it.skipped }?.any { File(bookDir, it.path).let { f -> f.isFile && f.length() == it.sizeBytes } } == true
         library.setDownloadState(bookId, if (anyComplete) DownloadState.PARTIAL else DownloadState.IN_CLOUD)
     }
 

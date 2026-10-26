@@ -125,4 +125,13 @@
             app:icon="@drawable/ic_download" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/downloadError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="?attr/colorError"
+        android:visibility="gone" />
+
 </LinearLayout>

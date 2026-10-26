@@ -26,6 +26,8 @@ data class BookManifest(
     val addedAt: Long,
     val chapters: List<ManifestChapter>,
     val files: List<ManifestFile>,
+    /** Why the last download stopped; cleared when it succeeds. */
+    val downloadFailure: DownloadFailure? = null,
 ) {
     companion object {
         const val SCHEMA_VERSION = 1
@@ -50,7 +52,13 @@ data class ManifestFile(
     val md5: String,
     /** Path of the file on Yandex Disk; null for locally imported books. */
     val remote: String? = null,
+    /** The user chose to go on without this file after it failed to download. */
+    val skipped: Boolean = false,
 )
+
+/** A download that stopped on [file] (path relative to the book directory); [code] is the HTTP status, if any. */
+@Serializable
+data class DownloadFailure(val file: String, val code: Int? = null)
 
 object BookManifestCodec {
 

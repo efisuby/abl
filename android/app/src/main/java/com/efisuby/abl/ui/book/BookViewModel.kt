@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.efisuby.abl.data.disk.DownloadController
 import com.efisuby.abl.data.importer.BookStorage
+import com.efisuby.abl.data.importer.DownloadFailure
 import com.efisuby.abl.data.repository.BookActions
 import com.efisuby.abl.domain.model.Book
 import com.efisuby.abl.domain.model.BookStatus
@@ -37,6 +38,8 @@ data class BookUiState(
     val progress: Progress? = null,
     val loaded: Boolean = false,
     val size: BookSize? = null,
+    /** Why the last download of this cloud book stopped, shown until the user retries or skips the file. */
+    val failure: DownloadFailure? = null,
 ) {
     /** The chapter playback continues from, if the book was started. */
     val currentChapterId: String? get() = progress?.chapterId?.takeIf { book?.status == BookStatus.IN_PROGRESS }
@@ -78,18 +81,36 @@ class BookViewModel(
             }
         }
 
+    // Read when the download state changes: a failed run flips DOWNLOADING to IN_CLOUD/PARTIAL.
+    private val failure = library.observeBook(bookId)
+        .map { book -> book?.takeIf { it.source == BookSource.YANDEX_DISK }?.downloadState }
+        .distinctUntilChanged()
+        .mapLatest { state ->
+            if (state == DownloadState.IN_CLOUD || state == DownloadState.PARTIAL) downloads.failure(bookId) else null
+        }
+
     val state: StateFlow<BookUiState> =
         combine(
             library.observeBook(bookId),
             library.observeChapters(bookId),
             bookmarks.observe(bookId),
             progress.observe(bookId),
-            size,
-        ) { book, chapters, marks, saved, size -> BookUiState(book, chapters, marks, saved, loaded = true, size = size) }
+            combine(size, failure) { size, failure -> size to failure },
+        ) { book, chapters, marks, saved, (size, failure) ->
+            BookUiState(book, chapters, marks, saved, loaded = true, size = size, failure = failure)
+        }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BookUiState())
 
     fun setStatus(status: BookStatus) {
         writeScope.launch { actions.setStatus(bookId, status) }
+    }
+
+    /** Leaves [file] out of the download and starts it again without waiting for the screen. */
+    fun skipFile(file: String) {
+        writeScope.launch {
+            downloads.skipFile(bookId, file)
+            downloads.start(bookId)
+        }
     }
 
     fun cancelDownload() {

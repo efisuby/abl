@@ -182,6 +182,13 @@
     <string name="download_cancel_button">Отменить загрузку</string>
     <string name="download_remove_button">Удалить загрузку</string>
     <string name="download_remove_message">Аудиофайлы «%1$s» будут удалены с устройства. Прогресс и закладки сохранятся, книга останется в облаке.</string>
+    <string name="download_failed">Не скачан файл «%1$s»: %2$s</string>
+    <string name="download_failed_http">ошибка сервера Диска (HTTP %1$d)</string>
+    <string name="download_failed_network">нет связи с Диском</string>
+    <string name="download_failed_title">Загрузка остановилась</string>
+    <string name="download_failed_message">Диск не отдаёт файл «%1$s». Можно повторить загрузку или пропустить этот файл и скачать остальные.</string>
+    <string name="download_retry">Повторить</string>
+    <string name="download_skip_file">Пропустить файл</string>
     <string name="download_removed">Загрузка удалена, книга осталась в облаке</string>
     <string name="book_size_device">На устройстве: %1$s</string>
     <string name="book_size_cloud">Размер: %1$s</string>

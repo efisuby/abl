@@ -21,6 +21,7 @@ import com.efisuby.abl.databinding.ActivityBookBinding
 import com.efisuby.abl.domain.model.BookStatus
 import com.efisuby.abl.domain.model.Bookmark
 import com.efisuby.abl.domain.model.Chapter
+import com.efisuby.abl.data.importer.DownloadFailure
 import com.efisuby.abl.domain.model.DownloadState
 import com.efisuby.abl.ui.common.applySystemBarInsets
 import com.efisuby.abl.ui.common.labelRes
@@ -118,8 +119,22 @@ class BookActivity : AppCompatActivity(), BookScreenActions {
         when (book.downloadState) {
             DownloadState.DOWNLOADING -> viewModel.cancelDownload()
             DownloadState.DOWNLOADED -> confirmRemoveDownload(book.title)
-            else -> startDownload(bookId)
+            else -> viewModel.state.value.failure?.let(::offerRetryOrSkip) ?: startDownload(bookId)
         }
+    }
+
+    /** The last download stopped on one file: retry it, or go on with the other files of the book. */
+    private fun offerRetryOrSkip(failure: DownloadFailure) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.download_failed_title)
+            .setMessage(getString(R.string.download_failed_message, failure.file.substringAfterLast('/')))
+            .setPositiveButton(R.string.download_retry) { _, _ -> startDownload(bookId) }
+            .setNeutralButton(R.string.download_skip_file) { _, _ ->
+                viewModel.skipFile(failure.file)
+                Toast.makeText(this, R.string.download_started, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(R.string.bookmark_cancel, null)
+            .show()
     }
 
     private fun confirmRemoveDownload(title: String) {

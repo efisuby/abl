@@ -119,4 +119,29 @@ class DiskApiTest {
         val e = assertThrows(DiskException.Http::class.java) { runBlocking { api.list("disk:/x") } }
         assertEquals(500, e.code)
     }
+
+    @Test
+    fun ensureFolderCreatesTheWholeChainTopDown() = runBlocking {
+        repeat(4) { server.enqueue(MockResponse().setResponseCode(201)) }
+
+        api.ensureFolder("disk:/Apps/AudioBookPlayer/books/Foo")
+
+        val requests = (1..4).map { server.takeRequest() }
+        assertTrue(requests.all { it.method == "PUT" })
+        assertEquals(
+            listOf("disk:/Apps", "disk:/Apps/AudioBookPlayer", "disk:/Apps/AudioBookPlayer/books", "disk:/Apps/AudioBookPlayer/books/Foo"),
+            requests.map { it.requestUrl!!.queryParameter("path") },
+        )
+    }
+
+    @Test
+    fun ensureFolderTreatsExistingFoldersAsDone() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(409)) // disk:/a exists
+        server.enqueue(MockResponse().setResponseCode(201)) // disk:/a/b is new
+
+        api.ensureFolder("disk:/a/b")
+
+        assertEquals("disk:/a", server.takeRequest().requestUrl!!.queryParameter("path"))
+        assertEquals("disk:/a/b", server.takeRequest().requestUrl!!.queryParameter("path"))
+    }
 }

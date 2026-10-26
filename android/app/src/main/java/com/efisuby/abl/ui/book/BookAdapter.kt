@@ -132,6 +132,13 @@ class BookAdapter(
             }
             binding.size.isVisible = state.size != null
             bindDownload(book)
+            val failure = state.failure
+            binding.downloadError.isVisible = failure != null
+            binding.downloadError.text = failure?.let {
+                val reason = it.code?.let { code -> context.getString(R.string.download_failed_http, code) }
+                    ?: context.getString(R.string.download_failed_network)
+                context.getString(R.string.download_failed, it.file.substringAfterLast('/'), reason)
+            }
 
             val current = state.chapters.indexOfFirst { it.id == state.currentChapterId }
             val started = book.status == BookStatus.IN_PROGRESS && current >= 0

@@ -3,6 +3,7 @@ package com.efisuby.abl.data.disk
 import android.annotation.SuppressLint
 import androidx.work.NetworkType
 import com.efisuby.abl.data.importer.BookManifestCodec
+import com.efisuby.abl.data.importer.DownloadFailure
 import com.efisuby.abl.data.importer.BookStorage
 import com.efisuby.abl.data.settings.SettingsRepository
 import com.efisuby.abl.domain.model.DownloadState
@@ -54,7 +55,7 @@ class DownloadController(
     suspend fun remainingBytes(bookId: String): Long? = withContext(ioDispatcher) {
         val manifest = runCatching { BookManifestCodec.read(storage.manifestFile(bookId)) }.getOrNull()
             ?: return@withContext null
-        manifest.files.sumOf { file ->
+        manifest.files.filterNot { it.skipped }.sumOf { file ->
             val present = File(storage.bookDir(bookId), file.path).takeIf { it.isFile }?.length() ?: 0L
             val part = File(storage.bookDir(bookId), file.path + BookStorage.PART_SUFFIX).takeIf { it.isFile }?.length() ?: 0L
             (file.sizeBytes - maxOf(present, part)).coerceAtLeast(0L)
@@ -64,6 +65,23 @@ class DownloadController(
     /** Full size of the cloud book in bytes (what it takes once downloaded); null if unknown. */
     suspend fun totalBytes(bookId: String): Long? = withContext(ioDispatcher) {
         runCatching { BookManifestCodec.read(storage.manifestFile(bookId)) }.getOrNull()?.files?.sumOf { it.sizeBytes }
+    }
+
+    /** Why the last download of the book stopped, if it did and the user has not acted on it yet. */
+    suspend fun failure(bookId: String): DownloadFailure? = withContext(ioDispatcher) {
+        runCatching { BookManifestCodec.read(storage.manifestFile(bookId)) }.getOrNull()?.downloadFailure
+    }
+
+    /** Goes on without [file] (relative path) after it failed: it is left out of this and later downloads. */
+    suspend fun skipFile(bookId: String, file: String) = withContext(ioDispatcher) {
+        val manifest = runCatching { BookManifestCodec.read(storage.manifestFile(bookId)) }.getOrNull() ?: return@withContext
+        BookManifestCodec.write(
+            manifest.copy(
+                files = manifest.files.map { if (it.path == file) it.copy(skipped = true) else it },
+                downloadFailure = null,
+            ),
+            storage.manifestFile(bookId),
+        )
     }
 
     suspend fun start(bookId: String): StartResult {

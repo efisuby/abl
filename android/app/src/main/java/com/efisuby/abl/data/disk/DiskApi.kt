@@ -99,8 +99,23 @@ class DiskApi(
         executeBlocking(url, path, method)
     }
 
-    /** Creates a folder; an existing one is fine. */
-    suspend fun createFolder(path: String) {
+    /**
+     * Creates [path] and every missing parent (`disk:/a/b/c` makes `a`, `a/b` and `a/b/c`); folders
+     * that exist are fine. Disk creates one level per request and answers 409 for a missing parent
+     * as well as for an existing folder, so the chain is built top-down.
+     */
+    suspend fun ensureFolder(path: String) {
+        val prefixEnd = path.indexOf(":/").takeIf { it >= 0 }?.plus(2) ?: 0
+        val prefix = path.substring(0, prefixEnd)
+        var current = prefix
+        for (segment in path.substring(prefixEnd).split('/').filter { it.isNotEmpty() }) {
+            current = if (current.isEmpty() || current.endsWith("/")) current + segment else "$current/$segment"
+            createFolder(current)
+        }
+    }
+
+    /** Creates one folder level; an existing one is fine. */
+    private suspend fun createFolder(path: String) {
         try {
             execute(resourcesUrl().newBuilder().addQueryParameter("path", path).build(), path, method = "PUT")
         } catch (e: DiskException.Http) {

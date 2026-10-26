@@ -68,7 +68,7 @@ class DiskCloudFiles(
 
     private suspend fun ensureFolder(relative: String) {
         if (relative.isEmpty() || relative in knownFolders) return
-        api.createFolder("$root/$relative")
+        api.ensureFolder("$root/$relative")
         knownFolders += relative
     }
 

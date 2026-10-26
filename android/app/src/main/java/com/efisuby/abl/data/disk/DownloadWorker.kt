@@ -18,6 +18,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.efisuby.abl.R
 import com.efisuby.abl.appContainer
+import com.efisuby.abl.data.importer.DownloadFailure
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import java.io.IOException
@@ -49,12 +50,22 @@ object RetryPolicy {
 
     /** Network and server trouble passes; a rejected token, a vanished file or a bad checksum does not. */
     fun isTransient(error: Exception): Boolean = when {
+        error is FileDownloadException -> isTransient(error.cause)
         error is ChecksumMismatchException -> false
+        error is DownloadHttpException -> error.code >= 500 || error.code == 429 || error.code == 408
         error is IOException -> true
         error is DiskException.RateLimited -> true
         error is DiskException.Http -> error.code >= 500
         else -> false
     }
+
+    /**
+     * The same file answering with a server error twice in a row is not going to recover by
+     * waiting: stop instead of spending the remaining attempts.
+     */
+    fun isStuck(previous: DownloadFailure?, current: DownloadFailure?): Boolean =
+        previous != null && current != null && previous.file == current.file &&
+            current.code != null && current.code >= 500 && previous.code == current.code
 }
 
 /** Downloads one book in a `dataSync` foreground service with a progress notification. */
@@ -68,6 +79,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
         showProgress(book.title, 0)
         var lastShown = 0L
         var attempt = 0
+        var previousFailure: DownloadFailure? = null
         while (true) {
             attempt++
             try {
@@ -84,10 +96,13 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
             } catch (e: Exception) {
                 // Class, HTTP code and our own short I/O messages only: neither the token nor response bodies are logged.
                 Log.w(TAG, "Attempt $attempt failed: ${e.javaClass.simpleName}" + (e.takeIf { it is IOException }?.message?.let { " ($it)" } ?: "") + ((e as? DiskException.Http)?.let { " ${it.code}" } ?: ""))
-                if (!RetryPolicy.isTransient(e) || attempt >= RetryPolicy.MAX_ATTEMPTS) {
+                val failure = (e as? FileDownloadException)?.let { DownloadFailure(it.file, it.code) }
+                if (failure != null) container.bookDownloader.recordFailure(bookId, failure)
+                if (!RetryPolicy.isTransient(e) || RetryPolicy.isStuck(previousFailure, failure) || attempt >= RetryPolicy.MAX_ATTEMPTS) {
                     container.bookDownloader.markFailed(bookId)
                     return Result.failure()
                 }
+                previousFailure = failure
                 // The partial file stays; the next attempt continues from its last byte.
                 delay(RetryPolicy.DELAY_MS)
             }

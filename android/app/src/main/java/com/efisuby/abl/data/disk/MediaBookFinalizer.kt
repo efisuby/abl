@@ -27,7 +27,7 @@ class MediaBookFinalizer(
 ) : BookFinalizer {
 
     override suspend fun finalize(book: Book, manifest: BookManifest, bookDir: File) {
-        val files = manifest.files.map { File(bookDir, it.path) }
+        val files = manifest.files.filterNot { it.skipped }.map { File(bookDir, it.path) }
         val firstTags = tagReader.read(files.first())
         val chapters = ChapterAssembler(tagReader, chapterReader).assemble(
             book.id,
