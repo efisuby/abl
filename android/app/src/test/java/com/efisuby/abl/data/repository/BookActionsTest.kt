@@ -7,12 +7,14 @@ import com.efisuby.abl.domain.model.Book
 import com.efisuby.abl.domain.model.BookSource
 import com.efisuby.abl.domain.model.BookStatus
 import com.efisuby.abl.domain.model.Chapter
+import com.efisuby.abl.domain.model.DownloadState
 import com.efisuby.abl.domain.model.Progress
 import com.efisuby.abl.domain.repository.LibraryRepository
 import com.efisuby.abl.domain.repository.ProgressRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -98,9 +100,29 @@ class BookActionsTest {
         assertEquals(book.coverPath, updated.coverPath)
     }
 
+    @Test
+    fun `removing downloads keeps cloud books in the library and leaves imported books alone`() = runBlocking {
+        val cloud = Book(id = "c1", title = "Cloud", source = BookSource.YANDEX_DISK, remotePath = "/Books/Cloud", addedAt = 1)
+        library.books[cloud.id] = cloud
+        storage.audioFile(cloud.id, "01.mp3").apply { parentFile!!.mkdirs(); writeText("audio") }
+        BookManifestCodec.write(
+            BookManifest(id = cloud.id, title = cloud.title, source = "YANDEX_DISK", totalDurationMs = 0, addedAt = 1, chapters = emptyList(), files = emptyList()),
+            storage.manifestFile(cloud.id),
+        )
+
+        assertEquals(1, actions.removeDownloads())
+
+        assertEquals(DownloadState.IN_CLOUD, library.books.getValue(cloud.id).downloadState)
+        assertFalse(storage.audioDir(cloud.id).exists())
+        assertTrue("the manifest and cover stay for the library", storage.manifestFile(cloud.id).isFile)
+        assertEquals(DownloadState.DOWNLOADED, library.books.getValue(book.id).downloadState)
+        assertTrue(storage.audioFile(book.id, "01.mp3").isFile)
+        assertEquals(0, actions.removeDownloads())
+    }
+
     private class FakeLibrary : LibraryRepository {
         val books = mutableMapOf<String, Book>()
-        override fun observeBooks(): Flow<List<Book>> = emptyFlow()
+        override fun observeBooks(): Flow<List<Book>> = flow { emit(books.values.toList()) }
         override fun observeBook(id: String): Flow<Book?> = emptyFlow()
         override fun observeChapters(bookId: String): Flow<List<Chapter>> = emptyFlow()
         override suspend fun getBook(id: String) = books[id]
@@ -113,6 +135,9 @@ class BookActionsTest {
         }
         override suspend fun setStatus(id: String, status: BookStatus) {
             books[id] = books.getValue(id).copy(status = status)
+        }
+        override suspend fun setDownloadState(id: String, state: DownloadState) {
+            books[id] = books.getValue(id).copy(downloadState = state)
         }
         override suspend fun deleteBook(id: String) {
             books.remove(id)

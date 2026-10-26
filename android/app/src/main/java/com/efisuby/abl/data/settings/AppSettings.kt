@@ -2,15 +2,8 @@ package com.efisuby.abl.data.settings
 
 import kotlin.math.roundToInt
 
-enum class ThemeMode {
-    SYSTEM,
-    LIGHT,
-    DARK,
-}
-
+/** The app is dark-only and Russian-only (app-shell spec), so neither is a setting. */
 data class AppSettings(
-    val theme: ThemeMode = ThemeMode.SYSTEM,
-    val language: String? = null,
     val playbackSpeed: Float = DEFAULT_SPEED,
     val wifiOnly: Boolean = true,
     val lastSyncAt: Long? = null,
@@ -36,11 +29,9 @@ data class AppSettings(
  */
 object SyncableSettings {
 
-    const val KEY_THEME = "theme"
-    const val KEY_LANGUAGE = "language"
     const val KEY_PLAYBACK_SPEED = "playback_speed"
 
-    val keys: Set<String> = setOf(KEY_THEME, KEY_LANGUAGE, KEY_PLAYBACK_SPEED)
+    val keys: Set<String> = setOf(KEY_PLAYBACK_SPEED)
 
     fun syncableOnly(values: Map<String, Any?>): Map<String, Any?> =
         values.filterKeys { it in keys }

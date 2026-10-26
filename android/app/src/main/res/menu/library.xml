@@ -6,5 +6,9 @@
         android:icon="@drawable/ic_search"
         android:title="@string/library_search"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
-        app:showAsAction="always|collapseActionView" />
+        app:showAsAction="ifRoom|collapseActionView" />
+    <item
+        android:id="@+id/settings"
+        android:title="@string/settings_title"
+        app:showAsAction="never" />
 </menu>

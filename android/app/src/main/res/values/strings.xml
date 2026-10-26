@@ -117,4 +117,27 @@
     <string name="bookmarks_title">Закладки</string>
     <string name="bookmarks_open">Открыть закладки</string>
     <string name="bookmarks_empty">Закладок пока нет</string>
+
+    <string name="settings_title">Настройки</string>
+    <string name="settings_downloads">Загрузки</string>
+    <string name="settings_wifi_only">Скачивать только по Wi-Fi</string>
+    <string name="settings_wifi_only_summary">Книги из облака не будут загружаться через мобильную сеть</string>
+    <string name="settings_storage">Хранилище</string>
+    <string name="settings_storage_used">Книги занимают %1$s</string>
+    <string name="settings_storage_hint">Удаляются только аудиофайлы книг из облака: книги останутся в библиотеке, их можно скачать снова. Книги, импортированные с устройства, не затрагиваются.</string>
+    <string name="settings_remove_downloads">Удалить все загрузки</string>
+    <string name="settings_remove_downloads_title">Удалить все загрузки?</string>
+    <string name="settings_remove_downloads_message">Аудиофайлы книг из облака будут удалены с устройства. Прогресс и закладки сохранятся.</string>
+    <string name="settings_remove_downloads_confirm">Удалить</string>
+    <plurals name="settings_downloads_removed">
+        <item quantity="one">Загрузки удалены у %d книги</item>
+        <item quantity="few">Загрузки удалены у %d книг</item>
+        <item quantity="many">Загрузки удалены у %d книг</item>
+        <item quantity="other">Загрузки удалены у %d книги</item>
+    </plurals>
+    <string name="settings_sync">Синхронизация</string>
+    <string name="settings_sync_never">Синхронизация ещё не выполнялась</string>
+    <string name="settings_sync_last">Последняя синхронизация: %1$s</string>
+    <string name="settings_account">Аккаунт Яндекса</string>
+    <string name="settings_account_signed_out">Вход не выполнен</string>
 </resources>

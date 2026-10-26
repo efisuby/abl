@@ -20,6 +20,7 @@ import androidx.media3.session.SessionResult
 import com.efisuby.abl.R
 import com.efisuby.abl.appContainer
 import com.efisuby.abl.domain.model.BookStatus
+import com.efisuby.abl.domain.model.DownloadState
 import com.efisuby.abl.ui.player.PlayerActivity
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -109,15 +110,18 @@ class PlaybackService : MediaSessionService() {
                 player.setPlaybackSpeed(it)
             }
         }
-        // A deleted book must not keep playing from files that are gone.
+        // A deleted book, or one whose downloads were removed, must not keep playing from files
+        // that are gone.
         scope.launch {
-            container.libraryRepository.observeBooks().map { books -> books.mapTo(HashSet()) { it.id } }.collect { ids ->
-                val bookId = current()?.first ?: return@collect
-                if (bookId !in ids) {
-                    player.stop()
-                    player.clearMediaItems()
+            container.libraryRepository.observeBooks()
+                .map { books -> books.filter { it.downloadState == DownloadState.DOWNLOADED }.mapTo(HashSet()) { it.id } }
+                .collect { playable ->
+                    val bookId = current()?.first ?: return@collect
+                    if (bookId !in playable) {
+                        player.stop()
+                        player.clearMediaItems()
+                    }
                 }
-            }
         }
         scope.launch {
             while (isActive) {

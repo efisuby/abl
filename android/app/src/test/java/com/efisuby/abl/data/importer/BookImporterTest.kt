@@ -3,6 +3,7 @@ package com.efisuby.abl.data.importer
 import com.efisuby.abl.domain.model.Book
 import com.efisuby.abl.domain.model.BookStatus
 import com.efisuby.abl.domain.model.Chapter
+import com.efisuby.abl.domain.model.DownloadState
 import com.efisuby.abl.domain.repository.LibraryRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -171,6 +172,7 @@ class BookImporterTest {
         override suspend fun getChapters(bookId: String) = chapters[bookId].orEmpty()
         override suspend fun updateMetadata(book: Book) = Unit
         override suspend fun setStatus(id: String, status: BookStatus) = Unit
+        override suspend fun setDownloadState(id: String, state: DownloadState) = Unit
         override suspend fun deleteBook(id: String) = Unit
     }
 

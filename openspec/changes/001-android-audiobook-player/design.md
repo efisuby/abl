@@ -142,7 +142,7 @@ Progress: on read all `progress/*.json` are merged, and the record with the grea
 
 ### D12. Settings in DataStore Preferences
 
-Theme, language, speed, "Wi-Fi only", last synchronization time. Syncable keys are marked explicitly so that new settings do not leak into the cloud by default.
+Speed, "Wi-Fi only", last synchronization time. Syncable keys are marked explicitly so that new settings do not leak into the cloud by default. There are no theme or language settings: the app is dark-only and Russian-only (app-shell spec).
 
 ### D13. Testing
 

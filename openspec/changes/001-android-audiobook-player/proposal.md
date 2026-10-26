@@ -11,7 +11,7 @@ The repository currently holds only an empty Android scaffold that renders a pla
 - Library: covers and metadata, search, sorting, statuses, series, timecoded bookmarks, manual editing.
 - Yandex Disk as the book source: Yandex ID sign-in, browsing the app's fixed folder, a download queue with resume, offline states, storage management.
 - Sync through Disk: progress, bookmarks, metadata with covers, selected settings; conflict resolution between devices.
-- App basics: theme (light/dark/system), ru/en localization, settings screen.
+- App basics: dark-only theme, Russian-only interface, settings screen.
 - **BREAKING** for the previously installed placeholder: `applicationId` changes to `com.efisuby.abl`, so it cannot be updated in place and must be uninstalled first.
 
 The app only reads audio files on Disk: it never uploads, renames or deletes books in the cloud.
@@ -24,7 +24,7 @@ The app only reads audio files on Disk: it never uploads, renames or deletes boo
 - `playback`: chapter playback, playback controls, speed, sleep timer, position saving and restoring, background playback, bookmarks.
 - `yandex-disk`: Yandex ID authorization, browsing the cloud book folder, importing and downloading books, offline states, storage management.
 - `sync`: exchange of progress, bookmarks, metadata and settings through Yandex Disk, conflict resolution, restoration after reinstall.
-- `app-shell`: theme, localization, notification permission, settings screen.
+- `app-shell`: dark appearance, Russian interface, notification permission, settings screen.
 
 ### Modified Capabilities
 

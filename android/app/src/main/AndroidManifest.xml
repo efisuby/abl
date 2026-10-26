@@ -42,6 +42,10 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".ui.settings.SettingsActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.player.PlayerActivity"
             android:exported="false"
             android:launchMode="singleTop" />

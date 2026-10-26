@@ -49,6 +49,9 @@ interface BookDao {
     @Query("UPDATE books SET status = :status WHERE id = :id")
     suspend fun updateStatus(id: String, status: String)
 
+    @Query("UPDATE books SET downloadState = :state WHERE id = :id")
+    suspend fun updateDownloadState(id: String, state: String)
+
     @Query("UPDATE books SET lastListenedAt = :timestamp WHERE id = :id")
     suspend fun updateLastListenedAt(id: String, timestamp: Long)
 

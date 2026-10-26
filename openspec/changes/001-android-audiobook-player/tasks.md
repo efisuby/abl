@@ -40,17 +40,17 @@
 - [x] 4.6 Implement book deletion with confirmation and directory cleanup; verify with a unit test: after deletion the book directory is gone and the record disappears from the database
 - [x] 4.7 Add empty states for the library and search; verify with a UI test: with an empty library an import hint is visible
 
-## 5. Settings, theme, localization
+## 5. Settings and theme
 
-- [ ] 5.1 Implement the light, dark and system theme with immediate application; verify with an instrumented test: switching the theme changes the activity theme without a restart
-- [ ] 5.2 Move all strings into `values/strings.xml` and `values-en/strings.xml`; verify with a build using `-Pandroid.testInstrumentationRunnerArguments` and a manual check of both languages
-- [ ] 5.3 Build the settings screen: theme, language, "Wi-Fi only", storage, synchronization, sign-out; verify with a UI test: all elements are reachable and trigger the expected actions
+- [x] 5.1 Switch the app to a dark-only Material 3 theme and remove the theme and language settings; verify with an instrumented test: with system dark mode off the activity configuration is night mode
+- [x] 5.2 Keep the interface Russian-only: all strings in `values/strings.xml`, no other locales; verify with an instrumented test: under an English locale the library screen shows the Russian strings
+- [x] 5.3 Build the settings screen: "Wi-Fi only", storage, synchronization state, account section (the sign-out action itself comes with 6.3); verify with a UI test: all elements are reachable and trigger the expected actions
 
 ## 6. Yandex Disk: authorization
 
 - [ ] 6.1 Wire the Yandex ID SDK and build the sign-in screen handling `Success`, `Failure`, `Cancelled`; verify manually on the device: a successful sign-in opens the cloud section, cancellation returns to the screen
 - [ ] 6.2 Implement encrypted token storage with an Android Keystore key; verify with a unit test: the token reads back identical after writing, and the file contains no plaintext token
-- [ ] 6.3 Implement sign-out and 401 handling; verify with a client unit test: 401 moves the state to "sign-in required" while local books remain
+- [ ] 6.3 Implement sign-out (in the settings account section) and 401 handling; verify with a client unit test: 401 moves the state to "sign-in required" while local books remain
 - [ ] 6.4 Verify authorization on a real account and confirm that the `cloud_api` permission group is available; if it is not, record the switch to the "For API access" app type in `design.md`
 
 ## 7. Yandex Disk: browser and downloads

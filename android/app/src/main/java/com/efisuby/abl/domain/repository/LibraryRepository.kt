@@ -3,6 +3,7 @@ package com.efisuby.abl.domain.repository
 import com.efisuby.abl.domain.model.Book
 import com.efisuby.abl.domain.model.BookStatus
 import com.efisuby.abl.domain.model.Chapter
+import com.efisuby.abl.domain.model.DownloadState
 import kotlinx.coroutines.flow.Flow
 
 /** Read and write access to the book library. The database is the single source of truth. */
@@ -24,6 +25,8 @@ interface LibraryRepository {
     suspend fun updateMetadata(book: Book)
 
     suspend fun setStatus(id: String, status: BookStatus)
+
+    suspend fun setDownloadState(id: String, state: DownloadState)
 
     /** Removes the book and, through foreign keys, its chapters, progress and bookmarks. */
     suspend fun deleteBook(id: String)

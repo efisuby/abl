@@ -7,6 +7,7 @@ import com.efisuby.abl.data.db.toEntity
 import com.efisuby.abl.domain.model.Book
 import com.efisuby.abl.domain.model.BookStatus
 import com.efisuby.abl.domain.model.Chapter
+import com.efisuby.abl.domain.model.DownloadState
 import com.efisuby.abl.domain.repository.LibraryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -52,6 +53,10 @@ class RoomLibraryRepository(private val database: AblDatabase) : LibraryReposito
 
     override suspend fun setStatus(id: String, status: BookStatus) {
         bookDao.updateStatus(id, status.name)
+    }
+
+    override suspend fun setDownloadState(id: String, state: DownloadState) {
+        bookDao.updateDownloadState(id, state.name)
     }
 
     override suspend fun deleteBook(id: String) {

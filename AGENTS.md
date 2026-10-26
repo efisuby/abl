@@ -1,6 +1,6 @@
 # AGENTS.md — ABL (AudioBook Player) Project State
 
-**Last updated:** 2026-10-25 (commit 7ccbb04)
+**Last updated:** 2026-10-26
 
 ---
 
@@ -8,8 +8,6 @@
 
 **ABL** — Android audiobook player with Yandex.Disk cloud library.
 - Package: `com.efisuby.abl`
-- Min SDK: 24, Target SDK: 36, Compile SDK: 36
-- Kotlin 2.3.20, AGP 8.13.2, Gradle 8.14.6
 - Architecture: single `:app` module, `data/domain/ui/playback` packages, Room as source of truth, manual DI via `AppContainer`
   - Existing today: `data/` (db, repository, settings, importer), `domain/` (model, repository interfaces), `di/`, `ui/` (common, library, importer, book, player), `playback/` (service, queue, timer).
   - Screens are separate Activities (no fragments/navigation lib yet); ViewModels via `viewModelFactory { initializer { … } }` reading `appContainer`. Edge-to-edge is enforced at target 36 → call `enableEdgeToEdge()` + `applySystemBarInsets(view)` (`ui/common/UiKit.kt`).
@@ -19,27 +17,8 @@
 
 ---
 
-## What's Done (M1 — Foundation & Local Playback, Group 1)
+## Yandex OAuth
 
-### Code
-- **Room schema** — `books`, `chapters`, `progress`, `bookmarks` tables with DAOs and mappers
-- **Repositories** — `RoomLibraryRepository`, `RoomProgressRepository` over Room
-- **Settings** — DataStore Preferences with explicit syncable-key allowlist (`theme`, `language`, `playback_speed`)
-- **DI** — `AppContainer` (lazy init), `AblApplication`, `Context.appContainer` extension
-- **Backup rules** — `dataExtractionRules` + `fullBackupContent` excluding `filesDir/books/` (verified: 5.6 KB vs 20.98 MB with 20 MB audio file)
-
-### Tests
-- Unit: `SyncableSettingsTest` (2 tests)
-- Instrumented: `AblDatabaseTest` (chapters ordered by index), `RepositoriesTest` (saveBook, savePosition monotonic updatedAt, deleteBook cascades)
-- All pass on API 36 emulator (`pixel_7`, x86_64)
-
-### OpenSpec
-- Change `001-android-audiobook-player` — **5 capabilities, 38 requirements, 54 tasks**
-- All artifacts in English (proposal, specs: library/playback/yandex-disk/sync/app-shell, design.md, tasks.md)
-- Group 1 tasks (1.1–1.5) ✅ checked in `tasks.md`
-- Validation: `openspec validate --strict` → valid
-
-### Yandex OAuth
 - App registered as **Android application** (type "Для авторизации пользователей")
 - Client ID: `4a94a7008ebc4ad2b5c0800dd28aed62` (public, in manifestPlaceholders)
 - SDK: `com.yandex.android:authsdk:3.1.3` (Maven Central)
@@ -49,13 +28,6 @@
   ```
   7B:F2:E4:8A:08:37:E8:38:9E:AA:8F:95:3F:E2:7D:8D:9D:85:CB:7E:3C:5C:4B:F7:F8:A0:44:77:F4:C8:F9:A2
   ```
-
-### Build & Verification
-```
-./gradlew :app:assembleDebug :app:testDebugUnitTest :app:assembleDebugAndroidTest  # BUILD SUCCESSFUL
-./gradlew :app:connectedDebugAndroidTest                                         # 4 tests pass on emulator
-adb install -r .../app-debug.apk                                                 # Success on device & emulator
-```
 
 ---
 
@@ -69,7 +41,7 @@ adb install -r .../app-debug.apk                                                
 - **Library search/filter/sort/series grouping is in memory** (`domain/library/LibraryArranger`), not SQL: SQLite NOCASE/LIKE folds ASCII only. `ProgressDao.observeBookPositions()` gives the absolute position for the listened %.
 - **Progress `updatedAt` is monotonic**: `max(now, previous + 1)` — required for cross-device LWW merge. Keep this in any new write path (`savePosition` also bumps `books.lastListenedAt`).
 - **Bookmarks use tombstones** (`deleted = 1` via `markDeleted`), never hard delete — needed for union-merge sync. `RoomBookmarkRepository` (in `AppContainer`) orders by chapter index, then position — the DAO alone orders by position only.
-- **Settings split**: only `theme`, `language`, `playback_speed` are syncable (`SyncableSettings.keys`). `wifi_only` and `last_sync_at` are device-local and must never be synced. Speed is clamped to 0.5–3.0.
+- **Settings split**: only `playback_speed` is syncable (`SyncableSettings.keys`). `wifi_only` and `last_sync_at` are device-local and must never be synced. Speed is clamped to 0.5–3.0.
 - **Device ID** lives in plain SharedPreferences (`device` / `device_id`), not DataStore — intentional, DataStore is for user settings only.
 - **JSON = kotlinx-serialization 1.8.1** (`book.json` via `BookManifestCodec`, `ignoreUnknownKeys`, `schemaVersion`). Release (R8 + `shrinkResources`) builds; runtime check of serialization in release is task 9.2.
 - **Import (`data/importer/`)**: `BookImporter` copies through `.part` (md5 per file), writes `book.json`, then `saveBook`; on failure/cancel deletes the whole book dir. Chapter IDs = `UUID.nameUUIDFromBytes("$bookId/$relativeFile#$startMs")`. Remember: `CancellationException` *is* an `IllegalStateException` — check it first in catch/when.
@@ -81,35 +53,23 @@ adb install -r .../app-debug.apk                                                
 - **Playback (`playback/`)**: `PlaybackService` (MediaSessionService + ExoPlayer, speech audio attributes, ±15 s increments). Controllers ask for a book with `PlaybackIds.request(bookId, chapterId?, positionMs?)` as the only media item; `onSetMediaItems` answers with one item per chapter (`ChapterQueue` → `QueueEntry.toMediaItem`, mediaId `"$bookId/$chapterId"`, clipped for m4b, last chapter of a file unclipped). Progress writes go through one ordered `Channel` in `applicationScope` (a late position write must not undo "finished"); `PositionTracker` throttles to 5 s and ignores chapters of a previous book during a queue swap. Sleep timer = custom session command `SleepTimer.COMMAND`, state in session extras; "end of chapter" = `pauseAtEndOfMediaItems`. Speed lives in DataStore (`AppSettings.normalizeSpeed`), the service collects it.
 - **Media3 unstable APIs** (`CommandButton` prefs, `pauseAtEndOfMediaItems`, `Chapter`) need `@OptIn(UnstableApi::class)` or lint fails with `UnsafeOptInUsageError`.
 - **Test fixtures**: `app/src/androidTest/assets/fixtures/` (ffmpeg-generated, also on the JVM test classpath). SAF tests use `FixtureDocumentsProvider` + `MockContentResolver` (`useLibrary("android.test.mock")`). `M4bSpikeTest` runs only if real books are in `/data/local/tmp/abl-spike/`.
-- **Strings**: only `values/strings.xml` (Russian). `values-en/` is not created yet (task 5.2). `MainActivity` = toolbar search + status/source/sort chips + «Продолжить слушать» card + library with series headers, status and % + empty states; `BookActivity` = header (series, progress, status popup) + bookmarks + chapters, menu edit/delete; `EditBookActivity` = metadata + cover (`PickVisualMedia`, scaled ≤1024 px JPEG); `PlayerActivity` accepts chapter + position (bookmarks). Shared UI-test helpers: `androidTest/.../ui/UiTestSupport.kt`.
+- **Dark-only, Russian-only** (app-shell spec): `AblApplication` forces `MODE_NIGHT_YES` (so system bar icons stay light under edge-to-edge) and the app locale `ru` (`LocaleManager` on 33+, so library strings are Russian too); theme parent `Theme.Material3.Dark`. Only `values/strings.xml`, never add other locales. On 33+ `Resources.getSystem()` reports the app locale — use `LocaleManager.systemLocales` for the device language.
+- **Settings screen** (`ui/settings/`): Wi-Fi only, storage size + «Удалить все загрузки» (`BookActions.removeDownloads()`: only `YANDEX_DISK` books in DOWNLOADED/PARTIAL → state IN_CLOUD, `audio/` removed, manifest and cover kept; `PlaybackService` stops a book that is no longer DOWNLOADED), last sync time, account placeholder (sign-out is task 6.3). Entry: overflow menu of the library. `MainActivity` = toolbar search + status/source/sort chips + «Продолжить слушать» card + library with series headers, status and % + empty states; `BookActivity` = header (series, progress, status popup) + bookmarks + chapters, menu edit/delete; `EditBookActivity` = metadata + cover (`PickVisualMedia`, scaled ≤1024 px JPEG); `PlayerActivity` accepts chapter + position (bookmarks). Shared UI-test helpers: `androidTest/.../ui/UiTestSupport.kt`.
 - OpenSpec: all artifacts in English (`openspec/config.yaml`); every task must state how it is verified. `openspec/specs/` is empty until change 001 is archived.
 
 ---
 
-## Next Up: Task Group 5 — Settings, theme, localization
+## Next Up
 
-| Task | Description | Verification |
-|------|-------------|--------------|
-| 5.1 | Light / dark / system theme, applied immediately | Instrumented test: switching changes the activity theme without restart |
-| 5.2 | `values-en/strings.xml` | Build + manual check of both languages |
-| 5.3 | Settings screen: theme, language, Wi-Fi only, storage, sync, sign-out | UI test: all elements reachable |
-
-Groups 1–4 are done (see `tasks.md`).
-
-### Key Design Decisions (from `design.md`)
-- **Storage layout:** `filesDir/books/<bookId>/{book.json,cover.jpg,audio/}` — private, excluded from backup
-- **Chapter model:** mp3 = separate file (startMs=0); m4b = shared file + `ClippingConfiguration` with startMs/durationMs
-- **Metadata extraction:** `MediaMetadataRetriever` for mp3; m4b chapter cascade with mandatory spike first
-- **Book ID for cloud books:** deterministic `UUID.nameUUIDFromBytes(remotePath.getBytes())`
+`openspec/changes/001-android-audiobook-player/tasks.md` is the source of truth (first unchecked task); design decisions are in `design.md`.
 
 ---
 
 ## Known Risks / Spikes Required
 
-1. **m4b chapter extraction** — Media3 exposes `MediaMetadata.chapters` but real files vary (QuickTime chapter track vs Nero `chpl`). Spike `docs/spikes/m4b-chapters.md` must be done before 2.4.
-2. **Yandex ID SDK** — returns only access token (~1 year), no refresh token. Re-auth once/year. Verify Disk permission group is selectable for login-type app; if not, fall back to API-access type + manual code flow.
-3. **Disk API rate limits** — need cached listings + lazy tree loading for browser (task 7.x).
-4. **Large downloads (1–2 GB)** — WorkManager with `Range` resume, md5 verification, `dataSync` foreground notification, Wi-Fi-only constraint, storage guardrails.
+1. **Yandex ID SDK** — returns only access token (~1 year), no refresh token. Re-auth once/year. Verify Disk permission group is selectable for login-type app; if not, fall back to API-access type + manual code flow.
+2. **Disk API rate limits** — need cached listings + lazy tree loading for browser (task 7.x).
+3. **Large downloads (1–2 GB)** — WorkManager with `Range` resume, md5 verification, `dataSync` foreground notification, Wi-Fi-only constraint, storage guardrails.
 
 ---
 
@@ -134,27 +94,15 @@ nohup $ANDROID_HOME/emulator/emulator -avd abl-api36 -no-window -no-audio -no-bo
 
 ---
 
-## Common Commands
+## Commands not to guess
 
 ```bash
 cd /home/spell/src/abl/android
-
-# Build
-./gradlew :app:assembleDebug
-./gradlew :app:assembleRelease
-
-# Tests
-./gradlew :app:testDebugUnitTest
-./gradlew :app:connectedDebugAndroidTest   # needs emulator/device
-
-# Lint
-./gradlew :app:lintDebug
-
-# OpenSpec
-cd /home/spell/src/abl
-openspec validate 001-android-audiobook-player --strict
-openspec status --change 001-android-audiobook-player --json
-openspec list
+ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDebugAndroidTest   # pick the device when the phone is plugged in too
+# connectedDebugAndroidTest uninstalls the app afterwards; to keep files a test writes:
+#   ./gradlew :app:installDebug :app:installDebugAndroidTest
+#   adb shell am instrument -w -e class <Test> com.efisuby.abl.test/androidx.test.runner.AndroidJUnitRunner
+cd /home/spell/src/abl && openspec validate 001-android-audiobook-player --strict
 ```
 
 ---
@@ -164,14 +112,13 @@ openspec list
 - Remote: `git@github.com:efisuby/abl.git` (branch `master`)
 - Author: `Alexander Baranovskiy <3995123+efisuby@users.noreply.github.com>`
 - `.claude/` ignored (local ECC config)
-- `AGENTS.md` itself is **untracked** as of 2026-10-25 — commit it if it should be shared
 - Keystore files ignored (`keystore.properties`, `*.jks`, `*.keystore`) — example file `keystore.properties.example` tracked
 
 ---
 
 ## Handoff Notes for Next Agent
 
-1. **Status (2026-10-25):** Groups 1–4 complete (3.1, 3.4, 3.9 checked manually on the S24+). Next: group 5 (settings, theme, localization).
+1. **Status (2026-10-25):** Groups 1–5 complete (3.1, 3.4, 3.9 checked manually on the S24+). Next: group 6 (Yandex authorization).
 2. **m4b spike done** — `docs/spikes/m4b-chapters.md`; sample has no Audible/iTunes m4b yet.
 3. **Backup rules are verified** — don't remove them. The A/B test proved exclusion works.
 4. **Signing is stable** — debug and release use the same release key. OAuth fingerprint won't change.

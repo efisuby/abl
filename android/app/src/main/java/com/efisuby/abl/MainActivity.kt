@@ -29,6 +29,7 @@ import com.efisuby.abl.ui.common.labelRes
 import com.efisuby.abl.ui.common.loadCover
 import com.efisuby.abl.ui.importer.ImportActivity
 import com.efisuby.abl.ui.player.PlayerActivity
+import com.efisuby.abl.ui.settings.SettingsActivity
 import com.efisuby.abl.ui.library.BookListAdapter
 import com.efisuby.abl.ui.library.ContinueListening
 import com.efisuby.abl.ui.library.LibraryUiState
@@ -68,6 +69,11 @@ class MainActivity : AppCompatActivity() {
         applySystemBarInsets(binding.root)
         setUpSearch()
         setUpFilters()
+        binding.toolbar.setOnMenuItemClickListener { item ->
+            if (item.itemId != R.id.settings) return@setOnMenuItemClickListener false
+            startActivity(SettingsActivity.intent(this))
+            true
+        }
 
         val adapter = BookListAdapter(lifecycleScope) { startActivity(BookActivity.intent(this, it.id)) }
         binding.books.layoutManager = LinearLayoutManager(this)

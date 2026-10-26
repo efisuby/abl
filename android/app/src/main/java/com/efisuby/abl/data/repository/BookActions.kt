@@ -3,11 +3,14 @@ package com.efisuby.abl.data.repository
 import com.efisuby.abl.data.importer.BookManifestCodec
 import com.efisuby.abl.data.importer.BookStorage
 import com.efisuby.abl.domain.model.Book
+import com.efisuby.abl.domain.model.BookSource
 import com.efisuby.abl.domain.model.BookStatus
+import com.efisuby.abl.domain.model.DownloadState
 import com.efisuby.abl.domain.repository.LibraryRepository
 import com.efisuby.abl.domain.repository.ProgressRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import java.io.File
@@ -52,6 +55,24 @@ class BookActions(
         progress.markFinished(bookId, status == BookStatus.FINISHED)
     }
 
+    /**
+     * "Delete all downloads" (app-shell spec): the audio of cloud books goes, the books stay in
+     * the library as "in the cloud". Imported books have no cloud copy and are left alone. The
+     * state changes first, so the player stops before its files disappear. Returns the number of
+     * books cleaned up.
+     */
+    suspend fun removeDownloads(): Int {
+        val downloaded = library.observeBooks().first().filter {
+            // A running download is cancelled by the download queue itself (group 7).
+            it.source == BookSource.YANDEX_DISK && it.downloadState in REMOVABLE
+        }
+        for (book in downloaded) {
+            library.setDownloadState(book.id, DownloadState.IN_CLOUD)
+            withContext(ioDispatcher) { storage.audioDir(book.id).deleteRecursively() }
+        }
+        return downloaded.size
+    }
+
     /** Saves the edit and, if given, a new cover as JPEG bytes; returns the updated book. */
     suspend fun updateMetadata(bookId: String, edit: MetadataEdit, coverJpeg: ByteArray?): Book {
         val book = requireNotNull(library.getBook(bookId)) { "No book $bookId" }
@@ -93,6 +114,10 @@ class BookActions(
         } catch (e: SerializationException) {
             // Same for a manifest this version cannot parse.
         }
+    }
+
+    private companion object {
+        val REMOVABLE = setOf(DownloadState.DOWNLOADED, DownloadState.PARTIAL)
     }
 
     private fun String?.clean(): String? = this?.trim()?.takeIf { it.isNotEmpty() }

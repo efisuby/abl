@@ -44,7 +44,7 @@ Manually changed title, author, narrator, series, series number and cover MUST b
 
 ### Requirement: Settings synchronization
 
-The app MUST synchronize only listening and appearance settings (speed, theme, language). Device-specific settings, including the Wi-Fi-only download constraint and storage parameters, MUST NOT be synchronized.
+The app MUST synchronize only listening settings (speed). Device-specific settings, including the Wi-Fi-only download constraint and storage parameters, MUST NOT be synchronized.
 
 #### Scenario: Speed on the second device
 

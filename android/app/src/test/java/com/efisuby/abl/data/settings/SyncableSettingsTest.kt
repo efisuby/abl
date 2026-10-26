@@ -9,7 +9,7 @@ class SyncableSettingsTest {
     @Test
     fun `device-specific settings never enter the syncable set`() {
         val local = mapOf(
-            "theme" to "DARK",
+            "playback_speed" to 1.5f,
             "wifi_only" to true,
             "last_sync_at" to 1234L,
             "storage_path" to "/data/books",
@@ -17,7 +17,7 @@ class SyncableSettingsTest {
 
         val syncable = SyncableSettings.syncableOnly(local)
 
-        assertEquals(mapOf("theme" to "DARK"), syncable)
+        assertEquals(mapOf("playback_speed" to 1.5f), syncable)
         assertTrue("wifi_only" !in syncable)
         assertTrue("last_sync_at" !in syncable)
     }

@@ -91,6 +91,9 @@ class BookStorage(val root: File) {
         return target
     }
 
+    /** Bytes taken by all books on the device. */
+    fun usedBytes(): Long = root.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
+
     /** Removes everything stored for the book; used for failed imports and deletion. */
     fun delete(bookId: String) {
         bookDir(bookId).deleteRecursively()
