@@ -115,7 +115,8 @@ class AppContainer(context: Context) {
     val bookDownloader: BookDownloader by lazy {
         BookDownloader(
             links = diskApi,
-            http = httpClient,
+            // The download host can take long to answer the first byte of a big file.
+            http = httpClient.newBuilder().readTimeout(60, java.util.concurrent.TimeUnit.SECONDS).build(),
             storage = bookStorage,
             library = libraryRepository,
             finalizer = MediaBookFinalizer(bookStorage, libraryRepository, chapterAssembler.first, chapterAssembler.second),

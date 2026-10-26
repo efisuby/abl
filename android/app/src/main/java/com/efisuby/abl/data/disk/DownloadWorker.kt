@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -81,6 +82,8 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                // Class, HTTP code and our own short I/O messages only: neither the token nor response bodies are logged.
+                Log.w(TAG, "Attempt $attempt failed: ${e.javaClass.simpleName}" + (e.takeIf { it is IOException }?.message?.let { " ($it)" } ?: "") + ((e as? DiskException.Http)?.let { " ${it.code}" } ?: ""))
                 if (!RetryPolicy.isTransient(e) || attempt >= RetryPolicy.MAX_ATTEMPTS) {
                     container.bookDownloader.markFailed(bookId)
                     return Result.failure()
@@ -126,6 +129,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
     }
 
     companion object {
+        private const val TAG = "DownloadWorker"
         const val KEY_BOOK_ID = "bookId"
         private const val CHANNEL_ID = "downloads"
         private const val NOTIFICATION_ID = 2
