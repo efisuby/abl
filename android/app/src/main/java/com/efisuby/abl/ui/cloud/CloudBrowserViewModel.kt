@@ -1,5 +1,6 @@
 package com.efisuby.abl.ui.cloud
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.efisuby.abl.data.disk.DiskException
@@ -80,8 +81,11 @@ class CloudBrowserViewModel(
             } catch (e: DiskException.NotFound) {
                 emptyList() // the books folder has not been created yet
             } catch (e: DiskException) {
+                // Class and HTTP code only: neither the token nor response bodies are logged.
+                Log.w(TAG, "Listing failed: ${e.javaClass.simpleName}" + ((e as? DiskException.Http)?.let { " ${it.code}" } ?: ""))
                 return@launch fail(path)
             } catch (e: IOException) {
+                Log.w(TAG, "Listing failed: ${e.javaClass.simpleName}")
                 return@launch fail(path)
             }
             levels[path] = items
@@ -91,5 +95,9 @@ class CloudBrowserViewModel(
 
     private fun fail(path: String) {
         _state.value = CloudBrowserState(path, path == root, loading = false, failed = true)
+    }
+
+    private companion object {
+        const val TAG = "CloudBrowser"
     }
 }

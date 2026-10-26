@@ -51,7 +51,7 @@
 - [x] 6.1 Wire the Yandex ID SDK and build the sign-in screen handling `Success`, `Failure`, `Cancelled`; verify manually on the device: a successful sign-in opens the cloud section, cancellation returns to the screen
 - [x] 6.2 Implement encrypted token storage with an Android Keystore key; verify with a unit test: the token reads back identical after writing, and the file contains no plaintext token
 - [x] 6.3 Implement sign-out (in the settings account section) and 401 handling; verify with a client unit test: 401 moves the state to "sign-in required" while local books remain
-- [ ] 6.4 Verify authorization on a real account and confirm that the `cloud_api` permission group is available; if it is not, record the switch to the "For API access" app type in `design.md`
+- [x] 6.4 Verify authorization on a real account and confirm that the `cloud_api` permission group is available; if it is not, record the switch to the "For API access" app type in `design.md`
 
 ## 7. Yandex Disk: browser and downloads
 

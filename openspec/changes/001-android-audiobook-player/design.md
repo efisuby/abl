@@ -103,7 +103,7 @@ OkHttp + kotlinx.serialization, hosts `cloud-api.yandex.net`, header `Authorizat
 ### D8. Synchronization: one file per device instead of a shared one
 
 ```
-/Apps/AudioBookPlayer/
+/Приложения/AudioBookPlayer/
   books/                     # audiobooks, placed by the user
   progress/<deviceId>.json   # positions of this device
   bookmarks.json             # union + tombstones

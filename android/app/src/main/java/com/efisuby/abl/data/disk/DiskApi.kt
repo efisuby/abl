@@ -2,6 +2,8 @@ package com.efisuby.abl.data.disk
 
 import com.efisuby.abl.data.auth.AuthRepository
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
@@ -86,7 +88,12 @@ class DiskApi(
         return json.decodeFromString(body)
     }
 
-    private suspend fun execute(url: HttpUrl, path: String): String {
+    /** On the IO dispatcher: reading and closing the body is blocking, and the caller may be on Main. */
+    private suspend fun execute(url: HttpUrl, path: String): String = withContext(Dispatchers.IO) {
+        executeBlocking(url, path)
+    }
+
+    private suspend fun executeBlocking(url: HttpUrl, path: String): String {
         var attempt = 0
         while (true) {
             // The token is read per attempt: a sign-out between retries must stop the request.
@@ -120,8 +127,8 @@ class DiskApi(
     companion object {
         const val DEFAULT_BASE_URL = "https://cloud-api.yandex.net/"
 
-        /** The fixed folder the user puts audiobooks into (see design D8). */
-        const val BOOKS_ROOT = "disk:/Apps/AudioBookPlayer/books"
+        /** The fixed folder the user puts audiobooks into (see design D8); the system folder is localized, this is the Russian account layout. */
+        const val BOOKS_ROOT = "disk:/Приложения/AudioBookPlayer/books"
 
         /** Keeps listings small: no previews, EXIF and the like. */
         private const val LIST_FIELDS =
