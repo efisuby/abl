@@ -94,6 +94,8 @@ class BookActions(
             series = edit.series.clean(),
             seriesIndex = edit.seriesIndex?.takeIf { edit.series.clean() != null },
             coverPath = cover?.absolutePath ?: book.coverPath,
+            // Monotonic, like progress: a quick second edit must still beat the first on another device.
+            metadataUpdatedAt = maxOf(clock(), book.metadataUpdatedAt + 1),
         )
         library.updateMetadata(updated)
         withContext(ioDispatcher) { updateManifest(updated) }

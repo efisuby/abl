@@ -45,6 +45,18 @@ object SyncMerge {
         return best
     }
 
+    /** The most recent edit of a book's metadata wins; on a tie the earlier source (the local one) stays. */
+    fun library(vararg sources: Collection<LibraryEntry>): Map<String, LibraryEntry> {
+        val best = mutableMapOf<String, LibraryEntry>()
+        for (entries in sources) {
+            for (entry in entries) {
+                val current = best[entry.bookId]
+                if (current == null || entry.metadataUpdatedAt > current.metadataUpdatedAt) best[entry.bookId] = entry
+            }
+        }
+        return best
+    }
+
     /** Last write wins per key, ties by device id; keys that are not syncable are dropped. */
     fun settings(vararg sources: SettingsFile): Map<String, SettingEntry> {
         val best = mutableMapOf<String, Pair<SettingEntry, String>>()

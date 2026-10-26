@@ -30,6 +30,15 @@ class SyncEngineTest {
         override suspend fun applySettings(values: Map<String, SettingEntry>) {
             settings.putAll(values)
         }
+
+        val library = mutableMapOf<String, LibraryEntry>()
+        val covers = mutableMapOf<String, ByteArray>()
+        override suspend fun books() = library.values.map { it.copy(hasCover = it.bookId in covers) }
+        override suspend fun cover(bookId: String) = covers[bookId]
+        override suspend fun applyBook(entry: LibraryEntry, cover: ByteArray?) {
+            library[entry.bookId] = entry
+            if (cover != null) covers[entry.bookId] = cover
+        }
     }
 
     private fun progress(device: String, position: Long, at: Long) =
@@ -89,5 +98,30 @@ class SyncEngineTest {
         engine.sync()
         val report = engine.sync()
         assertEquals(SyncReport(0, 0, 0), report)
+    }
+
+    @Test
+    fun changedCoverReachesTheOtherDevice() = runBlocking {
+        val cloud = DirectoryCloudFiles(tmp.newFolder())
+        val phone = FakeStore()
+        val tablet = FakeStore()
+        val phoneEngine = SyncEngine(phone, cloud, "phone")
+        val tabletEngine = SyncEngine(tablet, cloud, "tablet")
+        phone.library["book"] = LibraryEntry("book", "Old", metadataUpdatedAt = 1)
+        tablet.library["book"] = LibraryEntry("book", "Old", metadataUpdatedAt = 1)
+
+        // the phone edits the title and picks a new cover
+        phone.library["book"] = LibraryEntry("book", "New", metadataUpdatedAt = 5)
+        phone.covers["book"] = byteArrayOf(1, 2, 3)
+        phoneEngine.sync()
+        val report = tabletEngine.sync()
+
+        assertEquals(1, report.booksApplied)
+        assertEquals("New", tablet.library.getValue("book").title)
+        assertEquals(listOf<Byte>(1, 2, 3), tablet.covers.getValue("book").toList())
+        // an older copy never overwrites a newer one
+        tabletEngine.sync()
+        phoneEngine.sync()
+        assertEquals("New", phone.library.getValue("book").title)
     }
 }

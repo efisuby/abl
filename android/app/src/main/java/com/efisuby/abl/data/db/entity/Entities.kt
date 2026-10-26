@@ -1,5 +1,6 @@
 package com.efisuby.abl.data.db.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -24,6 +25,8 @@ data class BookEntity(
     val downloadState: String,
     val addedAt: Long,
     val lastListenedAt: Long?,
+    /** Time of the last edit of title, author, series or cover; metadata sync is last-writer-wins on it. */
+    @ColumnInfo(defaultValue = "0") val metadataUpdatedAt: Long = 0L,
 )
 
 @Entity(

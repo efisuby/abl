@@ -48,6 +48,7 @@ class RoomLibraryRepository(private val database: AblDatabase) : LibraryReposito
             series = book.series,
             seriesIndex = book.seriesIndex,
             coverPath = book.coverPath,
+            metadataUpdatedAt = book.metadataUpdatedAt,
         )
     }
 

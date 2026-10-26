@@ -61,14 +61,14 @@
 - [x] 7.4 Implement the download worker with `Range` resume, `md5` verification and a `dataSync` foreground notification; verify with a MockWebServer test: an interruption mid-way continues from the same byte
 - [x] 7.5 Implement the "Wi-Fi only" constraint, cancellation and retry; verify with a unit test: on a mobile connection the job does not start, and after cancellation the `.part` is removed
 - [x] 7.6 Show offline book states and block playback of a book that is not downloaded; verify with a UI test: tapping play on a book "in the cloud" opens the download offer
-- [ ] 7.7 Implement storage management: book sizes, total volume, deleting downloads, free-space check; verify with a unit test of the size calculation and manually the low-space warning
+- [x] 7.7 Implement storage management: book sizes, total volume, deleting downloads, free-space check; verify with a unit test of the size calculation and manually the low-space warning
 
 ## 8. Synchronization
 
 - [x] 8.1 Implement `deviceId`, the JSON file format and the `schemaVersion` field; verify with a unit test: re-serializing produces an identical document
 - [x] 8.2 Implement progress upload and merging across all `progress/*.json`; verify with unit tests: with two positions the fresher one wins, and a tie triggers the tie-break
 - [x] 8.3 Implement bookmark synchronization with union and tombstones; verify with a unit test: a deleted bookmark is not restored after merging with an old copy
-- [ ] 8.4 Implement metadata and cover synchronization; verify with a unit test: a changed cover is downloaded to the "other device" (emulated with a second directory)
+- [x] 8.4 Implement metadata and cover synchronization; verify with a unit test: a changed cover is downloaded to the "other device" (emulated with a second directory)
 - [x] 8.5 Implement LWW per settings key and the exclusion of device-specific keys; verify with a unit test: speed is synchronized, "Wi-Fi only" is not
 - [ ] 8.6 Implement synchronization triggers: launch, leaving the player, network appearance, manual start; verify with an instrumented test: a player event starts synchronization exactly once
 - [ ] 8.7 Implement a local change queue and retry with backoff while offline; verify with a unit test: changes made offline are sent after the network returns

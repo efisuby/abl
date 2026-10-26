@@ -6,12 +6,17 @@ import com.efisuby.abl.data.db.entity.BookmarkEntity
 import com.efisuby.abl.data.db.entity.ProgressEntity
 import com.efisuby.abl.data.settings.SettingsRepository
 import com.efisuby.abl.data.settings.SyncableSettings
+import com.efisuby.abl.data.importer.BookStorage
 import com.efisuby.abl.domain.model.BookStatus
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
 
 /** [SyncStore] on the Room database and the settings store. */
 class RoomSyncStore(
     private val database: AblDatabase,
     private val settings: SettingsRepository,
+    private val storage: BookStorage,
 ) : SyncStore {
 
     private val books = database.bookDao()
@@ -70,6 +75,32 @@ class RoomSyncStore(
         values[SyncableSettings.KEY_PLAYBACK_SPEED]?.let { entry ->
             entry.value.toFloatOrNull()?.let { settings.applySyncedSpeed(it, entry.updatedAt) }
         }
+    }
+
+    override suspend fun books(): List<LibraryEntry> = books.getAll().map {
+        LibraryEntry(
+            bookId = it.id, title = it.title, author = it.author, narrator = it.narrator,
+            series = it.series, seriesIndex = it.seriesIndex, remotePath = it.remotePath,
+            totalDurationMs = it.totalDurationMs, addedAt = it.addedAt, metadataUpdatedAt = it.metadataUpdatedAt,
+            hasCover = it.coverPath?.let { path -> File(path).isFile } == true,
+        )
+    }
+
+    override suspend fun cover(bookId: String): ByteArray? = withContext(Dispatchers.IO) {
+        books.getById(bookId)?.coverPath?.let(::File)?.takeIf { it.isFile }?.readBytes()
+    }
+
+    override suspend fun applyBook(entry: LibraryEntry, cover: ByteArray?) {
+        val book = books.getById(entry.bookId) ?: return
+        if (entry.metadataUpdatedAt <= book.metadataUpdatedAt) return
+        val coverPath = cover?.let {
+            withContext(Dispatchers.IO) { storage.replaceCover(entry.bookId, it, entry.metadataUpdatedAt).absolutePath }
+        } ?: book.coverPath
+        books.updateMetadata(
+            id = entry.bookId, title = entry.title, author = entry.author, narrator = entry.narrator,
+            series = entry.series, seriesIndex = entry.seriesIndex, coverPath = coverPath,
+            metadataUpdatedAt = entry.metadataUpdatedAt,
+        )
     }
 
     private fun ProgressEntity.toDomainEntry() =

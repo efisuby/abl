@@ -17,9 +17,22 @@ interface SyncStore {
     suspend fun settings(): Map<String, SettingEntry>
 
     suspend fun applySettings(values: Map<String, SettingEntry>)
+
+    /** Metadata of the books on this device; [LibraryEntry.hasCover] tells whether a cover file exists. */
+    suspend fun books(): List<LibraryEntry>
+
+    suspend fun cover(bookId: String): ByteArray?
+
+    /** Stores newer metadata of a book on this device, with its new cover when there is one. */
+    suspend fun applyBook(entry: LibraryEntry, cover: ByteArray?)
 }
 
-data class SyncReport(val progressApplied: Int, val bookmarksApplied: Int, val settingsApplied: Int)
+data class SyncReport(
+    val progressApplied: Int,
+    val bookmarksApplied: Int,
+    val settingsApplied: Int,
+    val booksApplied: Int = 0,
+)
 
 /**
  * One exchange with the cloud: read every device's files, merge ([SyncMerge]), apply what is
@@ -36,6 +49,7 @@ class SyncEngine(
         progressApplied = syncProgress(),
         bookmarksApplied = syncBookmarks(),
         settingsApplied = syncSettings(),
+        booksApplied = syncLibrary(),
     )
 
     private suspend fun syncProgress(): Int {
@@ -81,6 +95,30 @@ class SyncEngine(
         return toApply.size
     }
 
+    private suspend fun syncLibrary(): Int {
+        val local = store.books()
+        val remoteText = files.read(LIBRARY)?.decodeToString()
+        val remote = remoteText?.let { runCatching { SyncJson.decodeLibrary(it).books }.getOrNull() }.orEmpty()
+        val remoteById = remote.associateBy { it.bookId }
+        val merged = SyncMerge.library(local, remote)
+
+        var applied = 0
+        for (entry in local) {
+            val winner = merged.getValue(entry.bookId)
+            if (winner.metadataUpdatedAt > entry.metadataUpdatedAt) {
+                val cover = if (winner.hasCover) files.read("covers/${winner.bookId}.jpg") else null
+                store.applyBook(winner, cover)
+                applied++
+            } else if (entry.hasCover && (remoteById[entry.bookId]?.metadataUpdatedAt ?: -1) < entry.metadataUpdatedAt) {
+                // This device holds the newest version (or the cloud has none): publish its cover.
+                store.cover(entry.bookId)?.let { files.write("covers/${entry.bookId}.jpg", it) }
+            }
+        }
+        // Books known only to other devices stay in the registry.
+        writeIfChanged(LIBRARY, SyncJson.encode(LibraryFile(books = merged.values.toList())))
+        return applied
+    }
+
     private fun ownPath(dir: String) = "$dir/$deviceId.json"
 
     /** Paths of the other devices' files in [dir]. */
@@ -106,5 +144,6 @@ class SyncEngine(
 
     private companion object {
         const val BOOKMARKS = "bookmarks.json"
+        const val LIBRARY = "library.json"
     }
 }

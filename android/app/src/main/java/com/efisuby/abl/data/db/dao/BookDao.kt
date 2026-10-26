@@ -15,6 +15,9 @@ interface BookDao {
     @Query("SELECT * FROM books WHERE id = :id")
     fun observeById(id: String): Flow<BookEntity?>
 
+    @Query("SELECT * FROM books")
+    suspend fun getAll(): List<BookEntity>
+
     @Query("SELECT * FROM books WHERE id = :id")
     suspend fun getById(id: String): BookEntity?
 
@@ -32,7 +35,8 @@ interface BookDao {
             narrator = :narrator,
             series = :series,
             seriesIndex = :seriesIndex,
-            coverPath = :coverPath
+            coverPath = :coverPath,
+            metadataUpdatedAt = :metadataUpdatedAt
         WHERE id = :id
         """,
     )
@@ -44,6 +48,7 @@ interface BookDao {
         series: String?,
         seriesIndex: Int?,
         coverPath: String?,
+        metadataUpdatedAt: Long,
     )
 
     @Query("UPDATE books SET status = :status WHERE id = :id")

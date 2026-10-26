@@ -42,4 +42,5 @@ data class Book(
     val downloadState: DownloadState = DownloadState.DOWNLOADED,
     val addedAt: Long,
     val lastListenedAt: Long? = null,
+    val metadataUpdatedAt: Long = 0L,
 )

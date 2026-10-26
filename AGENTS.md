@@ -33,7 +33,7 @@
 
 ## Code Invariants & Gotchas (read before changing data layer)
 
-- **Room schema is exported** to `android/app/schemas/` (currently version 1). No `fallbackToDestructiveMigration` — any entity change needs a version bump + `Migration` + committed schema JSON.
+- **Room schema is exported** to `android/app/schemas/` (currently version 2: `metadataUpdatedAt`, `MIGRATION_1_2`, `MigrationTest`). No `fallbackToDestructiveMigration` — any entity change needs a version bump + `Migration` + committed schema JSON.
 - **Enums stored as `String` (`.name`)** and mapped back with `valueOf()` in `data/db/Mappers.kt`. Renaming an enum constant (`BookSource`, `BookStatus`, `DownloadState`) breaks existing rows — needs a migration.
 - **`saveBook()` replaces all chapters** (delete by bookId + upsert in one transaction). `progress.chapterId` and `bookmarks.chapterId` have **no FK** to `chapters` — chapter IDs must be deterministic, otherwise re-import leaves dangling references.
 - **`LibraryRepository.deleteBook()` removes DB rows only** (chapters/progress/bookmarks via `ON DELETE CASCADE`). UI must delete through `BookActions.delete()` (`AppContainer.bookActions`), which also removes `filesDir/books/<bookId>/`. `PlaybackService` stops and clears the queue when the playing book disappears from the DB; `savePosition()` ignores a book that no longer exists.

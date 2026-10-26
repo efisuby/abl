@@ -47,6 +47,29 @@ data class BookmarkEntry(
     val deleted: Boolean = false,
 )
 
+/** `library.json`: registry of books with their metadata, shared by all devices. */
+@Serializable
+data class LibraryFile(
+    val schemaVersion: Int = SYNC_SCHEMA_VERSION,
+    val books: List<LibraryEntry> = emptyList(),
+)
+
+/** [hasCover] says that `covers/<bookId>.jpg` holds the cover that belongs to this version of the metadata. */
+@Serializable
+data class LibraryEntry(
+    val bookId: String,
+    val title: String,
+    val author: String? = null,
+    val narrator: String? = null,
+    val series: String? = null,
+    val seriesIndex: Int? = null,
+    val remotePath: String? = null,
+    val totalDurationMs: Long = 0L,
+    val addedAt: Long = 0L,
+    val metadataUpdatedAt: Long = 0L,
+    val hasCover: Boolean = false,
+)
+
 /** `settings/<deviceId>.json`: syncable keys only, each with its own modification time. */
 @Serializable
 data class SettingsFile(
@@ -73,11 +96,17 @@ object SyncJson {
 
     fun encode(file: SettingsFile): String = json.encodeToString(SettingsFile.serializer(), file.canonical())
 
+    fun encode(file: LibraryFile): String = json.encodeToString(LibraryFile.serializer(), file.canonical())
+
+    fun decodeLibrary(text: String): LibraryFile = json.decodeFromString(LibraryFile.serializer(), text)
+
     fun decodeProgress(text: String): ProgressFile = json.decodeFromString(ProgressFile.serializer(), text)
 
     fun decodeBookmarks(text: String): BookmarksFile = json.decodeFromString(BookmarksFile.serializer(), text)
 
     fun decodeSettings(text: String): SettingsFile = json.decodeFromString(SettingsFile.serializer(), text)
+
+    private fun LibraryFile.canonical() = copy(books = books.sortedBy { it.bookId })
 
     private fun ProgressFile.canonical() = copy(books = books.sortedBy { it.bookId })
 

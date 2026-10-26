@@ -81,6 +81,8 @@ android {
     sourceSets {
         // JVM tests parse the same small audio fixtures the instrumented tests import.
         getByName("test").resources.srcDir("src/androidTest/assets")
+        // MigrationTestHelper reads the exported Room schemas.
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
     }
 
     buildFeatures {
@@ -136,6 +138,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.core.ktx)

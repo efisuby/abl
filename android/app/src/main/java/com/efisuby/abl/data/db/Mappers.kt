@@ -27,6 +27,7 @@ fun BookEntity.toDomain(): Book = Book(
     downloadState = DownloadState.valueOf(downloadState),
     addedAt = addedAt,
     lastListenedAt = lastListenedAt,
+    metadataUpdatedAt = metadataUpdatedAt,
 )
 
 fun Book.toEntity(): BookEntity = BookEntity(
@@ -44,6 +45,7 @@ fun Book.toEntity(): BookEntity = BookEntity(
     downloadState = downloadState.name,
     addedAt = addedAt,
     lastListenedAt = lastListenedAt,
+    metadataUpdatedAt = metadataUpdatedAt,
 )
 
 fun ChapterEntity.toDomain(): Chapter = Chapter(
