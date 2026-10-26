@@ -152,7 +152,7 @@ class AppContainer(context: Context) {
     val syncRunner: SyncRunner by lazy {
         SyncRunner(
             engine = SyncEngine(
-                RoomSyncStore(database, settingsRepository, bookStorage),
+                RoomSyncStore(database, settingsRepository, bookStorage, cloudBookImporter, diskApi::resource),
                 DiskCloudFiles(diskApi, httpClient),
                 deviceIdProvider.deviceId(),
             ),

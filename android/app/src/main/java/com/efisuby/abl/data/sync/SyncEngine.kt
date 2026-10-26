@@ -25,6 +25,17 @@ interface SyncStore {
 
     /** Stores newer metadata of a book on this device, with its new cover when there is one. */
     suspend fun applyBook(entry: LibraryEntry, cover: ByteArray?)
+
+    /** Whether this installation has already brought back the library of the account (task 8.8). */
+    suspend fun libraryRestored(): Boolean
+
+    suspend fun markLibraryRestored()
+
+    /**
+     * Adds a book known only from the cloud registry as "in the cloud" (audio is downloaded on
+     * request) with its metadata and cover. False when its folder is gone from the Disk.
+     */
+    suspend fun restoreBook(entry: LibraryEntry, cover: ByteArray?): Boolean
 }
 
 data class SyncReport(
@@ -32,6 +43,7 @@ data class SyncReport(
     val bookmarksApplied: Int,
     val settingsApplied: Int,
     val booksApplied: Int = 0,
+    val booksRestored: Int = 0,
 )
 
 /**
@@ -45,12 +57,37 @@ class SyncEngine(
     private val deviceId: String,
 ) {
 
-    suspend fun sync(): SyncReport = SyncReport(
-        progressApplied = syncProgress(),
-        bookmarksApplied = syncBookmarks(),
-        settingsApplied = syncSettings(),
-        booksApplied = syncLibrary(),
-    )
+    suspend fun sync(): SyncReport {
+        // Books first: after a reinstall they must exist before their positions and bookmarks arrive.
+        val restored = restoreLibrary()
+        val books = syncLibrary()
+        return SyncReport(
+            progressApplied = syncProgress(),
+            bookmarksApplied = syncBookmarks(),
+            settingsApplied = syncSettings(),
+            booksApplied = books,
+            booksRestored = restored,
+        )
+    }
+
+    /**
+     * Once per installation, brings back the books the registry knows and this device lacks.
+     * Later this is off on purpose: a book the user deleted on this device must not return.
+     */
+    private suspend fun restoreLibrary(): Int {
+        if (store.libraryRestored()) return 0
+        val remote = files.read(LIBRARY)?.decodeToString()
+            ?.let { runCatching { SyncJson.decodeLibrary(it).books }.getOrNull() }.orEmpty()
+        val present = store.books().map { it.bookId }.toSet()
+        var restored = 0
+        for (entry in remote) {
+            if (entry.bookId in present || entry.remotePath == null) continue // imported from the device: no audio in the cloud
+            val cover = if (entry.hasCover) files.read("covers/${entry.bookId}.jpg") else null
+            if (store.restoreBook(entry, cover)) restored++
+        }
+        store.markLibraryRestored()
+        return restored
+    }
 
     private suspend fun syncProgress(): Int {
         val local = store.progress()

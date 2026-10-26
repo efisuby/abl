@@ -6,7 +6,11 @@ import com.efisuby.abl.data.db.entity.BookmarkEntity
 import com.efisuby.abl.data.db.entity.ProgressEntity
 import com.efisuby.abl.data.settings.SettingsRepository
 import com.efisuby.abl.data.settings.SyncableSettings
+import com.efisuby.abl.data.disk.CloudBookImporter
+import com.efisuby.abl.data.disk.DiskException
+import com.efisuby.abl.data.disk.DiskResource
 import com.efisuby.abl.data.importer.BookStorage
+import com.efisuby.abl.data.importer.ImportException
 import com.efisuby.abl.domain.model.BookStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,6 +21,9 @@ class RoomSyncStore(
     private val database: AblDatabase,
     private val settings: SettingsRepository,
     private val storage: BookStorage,
+    private val importer: CloudBookImporter,
+    /** Looks a Disk path up; throws [DiskException.NotFound] when it is gone. */
+    private val resolve: suspend (String) -> DiskResource,
 ) : SyncStore {
 
     private val books = database.bookDao()
@@ -101,6 +108,34 @@ class RoomSyncStore(
             series = entry.series, seriesIndex = entry.seriesIndex, coverPath = coverPath,
             metadataUpdatedAt = entry.metadataUpdatedAt,
         )
+    }
+
+    override suspend fun libraryRestored(): Boolean = settings.libraryRestored()
+
+    override suspend fun markLibraryRestored() = settings.markLibraryRestored()
+
+    override suspend fun restoreBook(entry: LibraryEntry, cover: ByteArray?): Boolean {
+        val path = entry.remotePath ?: return false
+        try {
+            importer.import(resolve(path))
+        } catch (e: DiskException.NotFound) {
+            return false
+        } catch (e: ImportException) {
+            return false // the folder has no audio any more
+        }
+        val book = books.getById(entry.bookId) ?: return false
+        val coverPath = cover?.let {
+            withContext(Dispatchers.IO) { storage.replaceCover(entry.bookId, it, entry.metadataUpdatedAt).absolutePath }
+        }
+        books.upsert(
+            book.copy(
+                title = entry.title, author = entry.author, narrator = entry.narrator,
+                series = entry.series, seriesIndex = entry.seriesIndex, totalDurationMs = entry.totalDurationMs,
+                addedAt = entry.addedAt, metadataUpdatedAt = entry.metadataUpdatedAt,
+                coverPath = coverPath ?: book.coverPath,
+            ),
+        )
+        return true
     }
 
     private fun ProgressEntity.toDomainEntry() =

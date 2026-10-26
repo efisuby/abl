@@ -96,4 +96,35 @@ class SyncEngineTest {
         phoneEngine.sync()
         assertEquals("New", phone.library.getValue("book").title)
     }
+
+    @Test
+    fun reinstallBringsBackBooksPositionsAndBookmarks() = runBlocking {
+        val cloud = DirectoryCloudFiles(tmp.newFolder())
+        val old = SyncEngineTestStore().apply {
+            library["book"] = LibraryEntry("book", "Title", remotePath = "disk:/b", metadataUpdatedAt = 3)
+            library["local"] = LibraryEntry("local", "From phone storage") // no remotePath: no audio in the cloud
+            covers["book"] = byteArrayOf(9)
+            progress["book"] = progress("old", 777, at = 50)
+            bookmarks["b1"] = bookmark("b1", 10)
+        }
+        SyncEngine(old, cloud, "old").sync()
+
+        // app data cleared: a new device id and an empty database
+        val fresh = SyncEngineTestStore().apply { restorable += "book" }
+        // restoring creates the book first, as the real store does through the importer
+        val engine = SyncEngine(fresh, cloud, "fresh")
+        val report = engine.sync()
+
+        assertEquals(1, report.booksRestored)
+        assertEquals("Title", fresh.library.getValue("book").title)
+        assertEquals(null, fresh.library["local"])
+        assertEquals(listOf<Byte>(9), fresh.covers.getValue("book").toList())
+        assertEquals(777L, fresh.progress.getValue("book").positionMs)
+        assertTrue(fresh.bookmarks.containsKey("b1"))
+
+        // a book deleted afterwards does not come back
+        fresh.library.remove("book")
+        assertEquals(0, engine.sync().booksRestored)
+        assertNull(fresh.library["book"])
+    }
 }

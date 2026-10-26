@@ -34,6 +34,13 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         }
     }
 
+    /** Device-local: set once the account's library was brought back to this installation. */
+    suspend fun libraryRestored(): Boolean = dataStore.data.first()[LIBRARY_RESTORED] ?: false
+
+    suspend fun markLibraryRestored() {
+        dataStore.edit { it[LIBRARY_RESTORED] = true }
+    }
+
     /** The speed with its change time for synchronization; null while it was never set. */
     suspend fun syncedSpeed(): Pair<Float, Long>? {
         val preferences = dataStore.data.first()
@@ -62,6 +69,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     private companion object {
         val PLAYBACK_SPEED = floatPreferencesKey(SyncableSettings.KEY_PLAYBACK_SPEED)
         val PLAYBACK_SPEED_UPDATED_AT = longPreferencesKey("playback_speed_updated_at")
+        val LIBRARY_RESTORED = booleanPreferencesKey("library_restored")
         val WIFI_ONLY = booleanPreferencesKey("wifi_only")
         val LAST_SYNC_AT = longPreferencesKey("last_sync_at")
     }
