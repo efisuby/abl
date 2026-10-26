@@ -13,34 +13,6 @@ class SyncEngineTest {
     @get:Rule
     val tmp = TemporaryFolder()
 
-    private class FakeStore : SyncStore {
-        val progress = mutableMapOf<String, ProgressEntry>()
-        val bookmarks = mutableMapOf<String, BookmarkEntry>()
-        val settings = mutableMapOf<String, SettingEntry>()
-
-        override suspend fun progress() = progress.values.toList()
-        override suspend fun applyProgress(entries: Collection<ProgressEntry>) {
-            entries.forEach { progress[it.bookId] = it }
-        }
-        override suspend fun bookmarks() = bookmarks.values.toList()
-        override suspend fun applyBookmarks(entries: Collection<BookmarkEntry>) {
-            entries.forEach { bookmarks[it.id] = it }
-        }
-        override suspend fun settings(): Map<String, SettingEntry> = settings.toMap()
-        override suspend fun applySettings(values: Map<String, SettingEntry>) {
-            settings.putAll(values)
-        }
-
-        val library = mutableMapOf<String, LibraryEntry>()
-        val covers = mutableMapOf<String, ByteArray>()
-        override suspend fun books() = library.values.map { it.copy(hasCover = it.bookId in covers) }
-        override suspend fun cover(bookId: String) = covers[bookId]
-        override suspend fun applyBook(entry: LibraryEntry, cover: ByteArray?) {
-            library[entry.bookId] = entry
-            if (cover != null) covers[entry.bookId] = cover
-        }
-    }
-
     private fun progress(device: String, position: Long, at: Long) =
         ProgressEntry("book", "c1", position, position, false, at, device)
 
@@ -50,8 +22,8 @@ class SyncEngineTest {
     @Test
     fun twoDevicesConverge() = runBlocking {
         val cloud = DirectoryCloudFiles(tmp.newFolder())
-        val phone = FakeStore()
-        val tablet = FakeStore()
+        val phone = SyncEngineTestStore()
+        val tablet = SyncEngineTestStore()
         val phoneEngine = SyncEngine(phone, cloud, "phone")
         val tabletEngine = SyncEngine(tablet, cloud, "tablet")
 
@@ -82,7 +54,7 @@ class SyncEngineTest {
         val dir = tmp.newFolder()
         val cloud = DirectoryCloudFiles(dir)
         cloud.write("progress/broken.json", "{not json".encodeToByteArray())
-        val phone = FakeStore().apply { progress["book"] = progress("phone", 5, at = 1) }
+        val phone = SyncEngineTestStore().apply { progress["book"] = progress("phone", 5, at = 1) }
 
         SyncEngine(phone, cloud, "phone").sync()
 
@@ -93,7 +65,7 @@ class SyncEngineTest {
     @Test
     fun secondSyncWritesNothingNew() = runBlocking {
         val cloud = DirectoryCloudFiles(tmp.newFolder())
-        val phone = FakeStore().apply { progress["book"] = progress("phone", 5, at = 1) }
+        val phone = SyncEngineTestStore().apply { progress["book"] = progress("phone", 5, at = 1) }
         val engine = SyncEngine(phone, cloud, "phone")
         engine.sync()
         val report = engine.sync()
@@ -103,8 +75,8 @@ class SyncEngineTest {
     @Test
     fun changedCoverReachesTheOtherDevice() = runBlocking {
         val cloud = DirectoryCloudFiles(tmp.newFolder())
-        val phone = FakeStore()
-        val tablet = FakeStore()
+        val phone = SyncEngineTestStore()
+        val tablet = SyncEngineTestStore()
         val phoneEngine = SyncEngine(phone, cloud, "phone")
         val tabletEngine = SyncEngine(tablet, cloud, "tablet")
         phone.library["book"] = LibraryEntry("book", "Old", metadataUpdatedAt = 1)

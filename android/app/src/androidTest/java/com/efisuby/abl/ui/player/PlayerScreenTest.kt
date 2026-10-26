@@ -22,6 +22,7 @@ import com.efisuby.abl.di.AppContainer
 import com.efisuby.abl.playback.PlaybackService
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -83,6 +84,33 @@ class PlayerScreenTest {
             onView(withId(R.id.back15)).perform(click())
 
             waitUntil("moved to 0:25") { onMain { controller.currentPosition in 24_500..25_500 } }
+        }
+    }
+
+    @Test
+    fun leavingThePlayerRequestsSynchronizationExactlyOnce() {
+        val original = container.syncScheduler
+        val requests = java.util.concurrent.atomic.AtomicInteger()
+        container.syncScheduler = object : com.efisuby.abl.data.sync.SyncScheduler {
+            override fun request(immediate: Boolean) {
+                requests.incrementAndGet()
+            }
+
+            override val active = kotlinx.coroutines.flow.flowOf(false)
+        }
+        try {
+            ActivityScenario.launch<PlayerActivity>(PlayerActivity.intent(context, bookId)).use { scenario ->
+                val controller = connectProbe()
+                waitUntil("the book is loaded") { onMain { controller.currentMediaItem?.mediaId?.startsWith(bookId) == true } }
+                assertEquals("nothing is requested while the player is open", 0, requests.get())
+
+                scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED) // the screen is left: onStop
+                waitUntil("the request arrives") { requests.get() >= 1 }
+            }
+            Thread.sleep(500)
+            assertEquals(1, requests.get())
+        } finally {
+            container.syncScheduler = original
         }
     }
 

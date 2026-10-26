@@ -154,6 +154,8 @@ class PlayerActivity : AppCompatActivity() {
         controller = null
         controllerFuture?.let(MediaController::releaseFuture)
         controllerFuture = null
+        // Leaving the player: publish the position (a rotation is not leaving).
+        if (!isChangingConfigurations) appContainer.syncScheduler.request()
         super.onStop()
     }
 

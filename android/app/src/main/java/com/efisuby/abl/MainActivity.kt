@@ -70,6 +70,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         applySystemBarInsets(binding.root)
+        // Launch trigger; a recreation (rotation) is not a launch.
+        if (savedInstanceState == null) appContainer.syncScheduler.request()
         setUpSearch()
         setUpFilters()
         binding.toolbar.setOnMenuItemClickListener { item ->

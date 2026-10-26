@@ -7,6 +7,7 @@ import com.efisuby.abl.data.auth.AuthState
 import com.efisuby.abl.data.importer.BookStorage
 import com.efisuby.abl.data.repository.BookActions
 import com.efisuby.abl.data.settings.SettingsRepository
+import com.efisuby.abl.data.sync.SyncScheduler
 import com.efisuby.abl.domain.model.BookSource
 import com.efisuby.abl.domain.model.DownloadState
 import com.efisuby.abl.domain.repository.LibraryRepository
@@ -31,6 +32,7 @@ data class SettingsUiState(
     /** Cloud books whose audio "Delete all downloads" would remove. */
     val removableBooks: Int,
     val auth: AuthState,
+    val syncing: Boolean,
 )
 
 class SettingsViewModel(
@@ -39,6 +41,7 @@ class SettingsViewModel(
     private val storage: BookStorage,
     private val actions: BookActions,
     private val auth: AuthRepository,
+    private val sync: SyncScheduler,
 ) : ViewModel() {
 
     /** Bumped after a cleanup: files go after the database update, so the size is measured again. */
@@ -50,7 +53,7 @@ class SettingsViewModel(
         .flowOn(Dispatchers.IO)
 
     /** Null until loaded. */
-    val state: StateFlow<SettingsUiState?> = combine(settings.settings, library.observeBooks(), usedBytes, auth.state) { prefs, books, bytes, authState ->
+    val state: StateFlow<SettingsUiState?> = combine(settings.settings, library.observeBooks(), usedBytes, auth.state, sync.active) { prefs, books, bytes, authState, syncing ->
         SettingsUiState(
             wifiOnly = prefs.wifiOnly,
             lastSyncAt = prefs.lastSyncAt,
@@ -59,6 +62,7 @@ class SettingsViewModel(
                 it.source == BookSource.YANDEX_DISK && it.downloadState != DownloadState.IN_CLOUD
             },
             auth = authState,
+            syncing = syncing,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -72,6 +76,8 @@ class SettingsViewModel(
     }
 
     fun signOut() = auth.signOut()
+
+    fun syncNow() = sync.request(immediate = true)
 
     fun removeDownloads() {
         viewModelScope.launch {

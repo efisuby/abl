@@ -2,7 +2,14 @@ package com.efisuby.abl.di
 
 import android.content.Context
 import com.efisuby.abl.data.auth.AuthRepository
+import com.efisuby.abl.data.auth.AuthState
 import com.efisuby.abl.data.auth.TokenStore
+import com.efisuby.abl.data.sync.DiskCloudFiles
+import com.efisuby.abl.data.sync.RoomSyncStore
+import com.efisuby.abl.data.sync.SyncEngine
+import com.efisuby.abl.data.sync.SyncRunner
+import com.efisuby.abl.data.sync.SyncScheduler
+import com.efisuby.abl.data.sync.WorkManagerSyncScheduler
 import com.efisuby.abl.data.auth.keystoreCipher
 import com.efisuby.abl.data.db.AblDatabase
 import com.efisuby.abl.data.disk.BookDownloader
@@ -141,6 +148,21 @@ class AppContainer(context: Context) {
     }
 
     val cloudLibraryAdder: CloudLibraryAdder by lazy { CloudLibraryAdder(cloudBookImporter, downloadController) }
+
+    val syncRunner: SyncRunner by lazy {
+        SyncRunner(
+            engine = SyncEngine(
+                RoomSyncStore(database, settingsRepository, bookStorage),
+                DiskCloudFiles(diskApi, httpClient),
+                deviceIdProvider.deviceId(),
+            ),
+            signedIn = { authRepository.state.value == AuthState.SIGNED_IN },
+            onSuccess = settingsRepository::setLastSyncAt,
+        )
+    }
+
+    /** Synchronization triggers go through here; a `var` so instrumented tests can count requests. */
+    var syncScheduler: SyncScheduler = WorkManagerSyncScheduler(appContext)
 
     val bookActions: BookActions by lazy { BookActions(libraryRepository, progressRepository, bookStorage) }
 

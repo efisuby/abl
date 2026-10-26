@@ -34,7 +34,7 @@ class SettingsActivity : AppCompatActivity() {
     private val viewModel: SettingsViewModel by viewModels {
         viewModelFactory {
             initializer {
-                with(appContainer) { SettingsViewModel(settingsRepository, libraryRepository, bookStorage, bookActions, authRepository) }
+                with(appContainer) { SettingsViewModel(settingsRepository, libraryRepository, bookStorage, bookActions, authRepository, syncScheduler) }
             }
         }
     }
@@ -52,6 +52,7 @@ class SettingsActivity : AppCompatActivity() {
             if (checked != viewModel.state.value?.wifiOnly) viewModel.setWifiOnly(checked)
         }
         binding.removeDownloads.setOnClickListener { confirmRemoveDownloads() }
+        binding.syncNow.setOnClickListener { viewModel.syncNow() }
         binding.signOut.setOnClickListener { confirmSignOut() }
 
         lifecycleScope.launch {
@@ -79,6 +80,8 @@ class SettingsActivity : AppCompatActivity() {
         )
         binding.signOut.isVisible = state.auth == AuthState.SIGNED_IN
         binding.removeDownloads.isEnabled = state.removableBooks > 0
+        binding.syncNow.isEnabled = state.auth == AuthState.SIGNED_IN && !state.syncing
+        binding.syncNow.setText(if (state.syncing) R.string.settings_sync_running else R.string.settings_sync_now)
         binding.lastSync.text = state.lastSyncAt?.let {
             getString(
                 R.string.settings_sync_last,

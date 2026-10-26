@@ -136,6 +136,8 @@
         <item quantity="other">Загрузки удалены у %d книги</item>
     </plurals>
     <string name="settings_sync">Синхронизация</string>
+    <string name="settings_sync_now">Синхронизировать</string>
+    <string name="settings_sync_running">Синхронизация…</string>
     <string name="settings_sync_never">Синхронизация ещё не выполнялась</string>
     <string name="settings_sync_last">Последняя синхронизация: %1$s</string>
     <string name="settings_account">Аккаунт Яндекса</string>
