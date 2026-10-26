@@ -120,7 +120,7 @@ cd /home/spell/src/abl && openspec validate 001-android-audiobook-player --stric
 
 ## Handoff Notes for Next Agent
 
-1. **Status (2026-10-26):** Groups 1–6 and 7.1–7.6 complete; 7.7 waits for a manual low-space check on the S24+ (also try a ≥500 MB download there).
+1. **Status (2026-10-26):** Groups 1–8 complete (8.8 checked manually on the S24+). Next: group 9 (integration and verification).
 2. **m4b spike done** — `docs/spikes/m4b-chapters.md`; sample has no Audible/iTunes m4b yet.
 3. **Backup rules are verified** — don't remove them. The A/B test proved exclusion works.
 4. **Signing is stable** — debug and release use the same release key. OAuth fingerprint won't change.

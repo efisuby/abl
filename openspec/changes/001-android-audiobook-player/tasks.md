@@ -72,7 +72,7 @@
 - [x] 8.5 Implement LWW per settings key and the exclusion of device-specific keys; verify with a unit test: speed is synchronized, "Wi-Fi only" is not
 - [x] 8.6 Implement synchronization triggers: launch, leaving the player, network appearance, manual start; verify with an instrumented test: a player event starts synchronization exactly once
 - [x] 8.7 Implement a local change queue and retry with backoff while offline; verify with a unit test: changes made offline are sent after the network returns
-- [ ] 8.8 Implement library restoration after reinstall from `library.json` with an offer to re-download audio; verify manually: clearing app data and signing in restores the list and positions
+- [x] 8.8 Implement library restoration after reinstall from `library.json` with an offer to re-download audio; verify manually: clearing app data and signing in restores the list and positions
 
 ## 9. Integration and verification
 
