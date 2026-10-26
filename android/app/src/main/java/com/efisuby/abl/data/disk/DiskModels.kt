@@ -3,6 +3,8 @@ package com.efisuby.abl.data.disk
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+private val AUDIO_EXTENSIONS = setOf("mp3", "m4b", "m4a")
+
 /** A file or folder on Yandex Disk (`/v1/disk/resources`). */
 @Serializable
 data class DiskResource(
@@ -17,6 +19,10 @@ data class DiskResource(
     @SerialName("_embedded") val embedded: DiskItems? = null,
 ) {
     val isFolder: Boolean get() = type == "dir"
+
+    /** A file the player can import: mp3, or an m4b/m4a book. */
+    val isAudio: Boolean
+        get() = !isFolder && name.substringAfterLast('.', "").lowercase() in AUDIO_EXTENSIONS
 }
 
 @Serializable

@@ -24,6 +24,7 @@ androidxTest = "1.7.0"
 espresso = "3.7.0"
 
 [libraries]
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }

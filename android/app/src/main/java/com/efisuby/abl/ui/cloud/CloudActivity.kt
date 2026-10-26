@@ -4,16 +4,21 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.efisuby.abl.R
 import com.efisuby.abl.appContainer
 import com.efisuby.abl.data.auth.AuthState
+import com.efisuby.abl.data.disk.DiskApi
 import com.efisuby.abl.databinding.ActivityCloudBinding
 import com.efisuby.abl.ui.common.applySystemBarInsets
 import com.yandex.authsdk.YandexAuthLoginOptions
@@ -23,8 +28,8 @@ import com.yandex.authsdk.YandexAuthSdk
 import kotlinx.coroutines.launch
 
 /**
- * The cloud section. Signed out it offers Yandex ID sign-in; once signed in it will host the
- * Disk browser (group 7).
+ * The cloud section. Signed out it offers Yandex ID sign-in; signed in it browses the books
+ * folder on Disk one level at a time.
  */
 class CloudActivity : AppCompatActivity() {
 
@@ -32,8 +37,16 @@ class CloudActivity : AppCompatActivity() {
 
     private val auth get() = appContainer.authRepository
 
+    private val viewModel: CloudBrowserViewModel by viewModels {
+        viewModelFactory {
+            initializer { CloudBrowserViewModel(appContainer.diskSource, DiskApi.BOOKS_ROOT) }
+        }
+    }
+
     // Created in onCreate: YandexAuthOptions needs the base context, which a field initializer lacks.
     private lateinit var signInLauncher: ActivityResultLauncher<YandexAuthLoginOptions>
+
+    private val adapter = CloudAdapter { folder -> viewModel.open(folder) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -46,25 +59,52 @@ class CloudActivity : AppCompatActivity() {
             YandexAuthSdk.create(YandexAuthOptions(this)).contract,
         ) { result -> handle(result) }
 
-        binding.toolbar.setNavigationOnClickListener { finish() }
+        binding.list.adapter = adapter
+        binding.toolbar.setNavigationOnClickListener { goUp() }
         binding.signIn.setOnClickListener { signInLauncher.launch(YandexAuthLoginOptions()) }
+        binding.retry.setOnClickListener { viewModel.retry() }
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() = goUp()
+            },
+        )
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                auth.state.collect(::render)
+                launch { auth.state.collect(::renderAuth) }
+                launch { viewModel.state.collect(::renderBrowser) }
             }
         }
     }
 
-    private fun render(state: AuthState) {
+    private fun goUp() {
+        if (auth.state.value == AuthState.SIGNED_IN && viewModel.up()) return
+        finish()
+    }
+
+    private fun renderAuth(state: AuthState) {
+        val signedIn = state == AuthState.SIGNED_IN
+        binding.signInGroup.isVisible = !signedIn
+        binding.browserGroup.isVisible = signedIn
         binding.message.setText(
-            when (state) {
-                AuthState.SIGNED_IN -> R.string.cloud_signed_in
-                AuthState.REAUTH_REQUIRED -> R.string.cloud_reauth_prompt
-                AuthState.SIGNED_OUT -> R.string.cloud_sign_in_prompt
-            },
+            if (state == AuthState.REAUTH_REQUIRED) R.string.cloud_reauth_prompt else R.string.cloud_sign_in_prompt,
         )
-        binding.signIn.isVisible = state != AuthState.SIGNED_IN
+        if (!signedIn) binding.toolbar.setTitle(R.string.cloud_title)
+        // A level that failed because the token was missing or rejected is requested again after signing in.
+        if (signedIn && viewModel.state.value.failed) viewModel.retry()
+    }
+
+    private fun renderBrowser(state: CloudBrowserState) {
+        if (auth.state.value == AuthState.SIGNED_IN) {
+            binding.toolbar.title = if (state.isRoot) getString(R.string.cloud_title) else state.path.substringAfterLast('/')
+        }
+        adapter.submitList(state.items)
+        binding.loading.isVisible = state.loading
+        val showNotice = !state.loading && (state.failed || state.items.isEmpty())
+        binding.notice.isVisible = showNotice
+        binding.retry.isVisible = state.failed
+        binding.noticeText.setText(if (state.failed) R.string.cloud_error else R.string.cloud_empty)
     }
 
     private fun handle(result: YandexAuthResult) {

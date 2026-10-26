@@ -16,6 +16,21 @@ import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+/** What the cloud browser needs from Disk; faked in UI tests. */
+interface DiskSource {
+    suspend fun list(path: String, limit: Int = 100, offset: Int = 0): DiskItems
+}
+
+/** Every entry of one level, paging through large folders. */
+suspend fun DiskSource.listAll(path: String, pageSize: Int = 100): List<DiskResource> {
+    val all = mutableListOf<DiskResource>()
+    while (true) {
+        val page = list(path, pageSize, all.size)
+        all += page.items
+        if (page.items.isEmpty() || all.size >= page.total) return all
+    }
+}
+
 /**
  * Yandex Disk REST API (`/v1/disk/resources`): listings and pre-signed download/upload links.
  * 401 drops the token through [auth]; 429 and 503 are retried with exponential backoff.
@@ -28,12 +43,12 @@ class DiskApi(
     private val backoffMs: Long = 1_000,
     /** Replaced in tests so backoff does not slow them down. */
     private val sleep: suspend (Long) -> Unit = { delay(it) },
-) {
+) : DiskSource {
 
     private val base: HttpUrl = baseUrl.toHttpUrl()
 
     /** One level of [path] (e.g. `app:/books`); [offset] and [limit] page through large folders. */
-    suspend fun list(path: String, limit: Int = 100, offset: Int = 0): DiskItems {
+    override suspend fun list(path: String, limit: Int, offset: Int): DiskItems {
         val url = resourcesUrl().newBuilder()
             .addQueryParameter("path", path)
             .addQueryParameter("limit", limit.toString())
@@ -104,6 +119,9 @@ class DiskApi(
 
     companion object {
         const val DEFAULT_BASE_URL = "https://cloud-api.yandex.net/"
+
+        /** The fixed folder the user puts audiobooks into (see design D8). */
+        const val BOOKS_ROOT = "disk:/Apps/AudioBookPlayer/books"
 
         /** Keeps listings small: no previews, EXIF and the like. */
         private const val LIST_FIELDS =

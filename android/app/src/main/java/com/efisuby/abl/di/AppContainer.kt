@@ -5,6 +5,8 @@ import com.efisuby.abl.data.auth.AuthRepository
 import com.efisuby.abl.data.auth.TokenStore
 import com.efisuby.abl.data.auth.keystoreCipher
 import com.efisuby.abl.data.db.AblDatabase
+import com.efisuby.abl.data.disk.DiskApi
+import com.efisuby.abl.data.disk.DiskSource
 import com.efisuby.abl.data.importer.BookImporter
 import com.efisuby.abl.data.importer.BookStorage
 import com.efisuby.abl.data.importer.CascadingChapterReader
@@ -26,6 +28,7 @@ import com.efisuby.abl.domain.repository.ProgressRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import okhttp3.OkHttpClient
 import java.io.File
 
 /**
@@ -56,9 +59,27 @@ class AppContainer(context: Context) {
     }
 
     /** Yandex OAuth token: encrypted with a Keystore key, in the no-backup directory. */
-    val authRepository: AuthRepository by lazy {
+    private var authOverride: AuthRepository? = null
+    private val defaultAuth: AuthRepository by lazy {
         AuthRepository(TokenStore(File(appContext.noBackupFilesDir, "yandex-token.bin"), keystoreCipher("abl-yandex-token")))
     }
+
+    /** A `var` so UI tests can stand in a signed-in state without touching the real token. */
+    var authRepository: AuthRepository
+        get() = authOverride ?: defaultAuth
+        set(value) {
+            authOverride = value
+        }
+
+    private val defaultDisk: DiskSource by lazy { DiskApi(OkHttpClient(), authRepository) }
+    private var diskOverride: DiskSource? = null
+
+    /** A `var` so UI tests can serve a fake Disk tree. */
+    var diskSource: DiskSource
+        get() = diskOverride ?: defaultDisk
+        set(value) {
+            diskOverride = value
+        }
 
     val bookStorage: BookStorage by lazy { BookStorage(File(appContext.filesDir, "books")) }
 

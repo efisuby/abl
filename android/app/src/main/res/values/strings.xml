@@ -150,7 +150,10 @@
     <string name="cloud_sign_in_prompt">Войдите в Яндекс, чтобы слушать книги с Яндекс.Диска</string>
     <string name="cloud_reauth_prompt">Сессия истекла. Войдите снова — локальные книги остаются доступными.</string>
     <string name="cloud_sign_in">Войти через Яндекс</string>
-    <string name="cloud_signed_in">Вход выполнен. Список книг появится здесь.</string>
+    <string name="cloud_folder">Папка</string>
+    <string name="cloud_retry">Повторить</string>
+    <string name="cloud_empty">Здесь пока нет книг. Откройте Яндекс.Диск в браузере и загрузите папки с mp3 или файлы m4b в папку «Приложения/AudioBookPlayer/books».</string>
+    <string name="cloud_error">Не удалось загрузить список. Проверьте соединение.</string>
     <string name="cloud_sign_in_cancelled">Вход отменён</string>
     <string name="cloud_sign_in_failed">Не удалось войти. Проверьте соединение и попробуйте ещё раз.</string>
 </resources>
