@@ -1,13 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Dark-only (app-shell spec); AblApplication also forces the night configuration. -->
-    <style name="Theme.AudioBookPlayer" parent="Theme.Material3.Dark.NoActionBar" />
+    <style name="Theme.AudioBookPlayer" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/abl_primary</item>
+        <item name="colorOnPrimary">@color/abl_on_primary</item>
+        <item name="colorPrimaryContainer">@color/abl_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/abl_on_primary_container</item>
+        <item name="colorSecondary">@color/abl_secondary</item>
+        <item name="colorOnSecondary">@color/abl_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/abl_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/abl_on_secondary_container</item>
+        <item name="colorTertiary">@color/abl_tertiary</item>
+        <item name="colorOnTertiary">@color/abl_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/abl_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/abl_on_tertiary_container</item>
+        <item name="colorError">@color/abl_error</item>
+        <item name="colorOnError">@color/abl_on_error</item>
+        <item name="colorErrorContainer">@color/abl_error_container</item>
+        <item name="colorOnErrorContainer">@color/abl_on_error_container</item>
+
+        <item name="android:colorBackground">@color/abl_surface</item>
+        <item name="colorSurface">@color/abl_surface</item>
+        <item name="colorOnSurface">@color/abl_on_surface</item>
+        <item name="colorOnBackground">@color/abl_on_surface</item>
+        <item name="colorSurfaceVariant">@color/abl_surface_container_highest</item>
+        <item name="colorOnSurfaceVariant">@color/abl_on_surface_variant</item>
+        <item name="colorSurfaceDim">@color/abl_surface_dim</item>
+        <item name="colorSurfaceBright">@color/abl_surface_bright</item>
+        <item name="colorSurfaceContainerLowest">@color/abl_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/abl_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/abl_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/abl_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/abl_surface_container_highest</item>
+        <item name="colorOutline">@color/abl_outline</item>
+        <item name="colorOutlineVariant">@color/abl_outline_variant</item>
+
+        <item name="shapeAppearanceCornerSmall">@style/ShapeAppearance.Abl.Small</item>
+        <item name="shapeAppearanceCornerMedium">@style/ShapeAppearance.Abl.Medium</item>
+        <item name="shapeAppearanceCornerLarge">@style/ShapeAppearance.Abl.Large</item>
+
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.Abl.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.Abl.TitleMedium</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.Abl.HeadlineSmall</item>
+    </style>
+
+    <!-- Shape scale: soft corners everywhere. -->
+    <style name="ShapeAppearance.Abl.Small" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/radius_small</item>
+    </style>
+
+    <style name="ShapeAppearance.Abl.Medium" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/radius_medium</item>
+    </style>
+
+    <style name="ShapeAppearance.Abl.Large" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/radius_large</item>
+    </style>
+
+    <!-- Slightly heavier titles than the Material defaults. -->
+    <style name="TextAppearance.Abl.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.Abl.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.Abl.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- Book cover (ShapeableImageView): rounded, with a quiet background while the image loads. -->
+    <style name="Widget.Abl.Cover" parent="">
+        <item name="android:background">?attr/colorSurfaceContainerHigh</item>
+        <item name="android:scaleType">centerCrop</item>
+        <item name="android:importantForAccessibility">no</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Abl.Medium</item>
+    </style>
+
+    <style name="Widget.Abl.Card" parent="Widget.Material3.CardView.Filled">
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainerHigh</item>
+        <item name="shapeAppearance">?attr/shapeAppearanceCornerLarge</item>
+    </style>
 
     <style name="SettingsSection">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">24dp</item>
-        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:layout_marginTop">@dimen/space_24</item>
+        <item name="android:layout_marginBottom">@dimen/space_8</item>
         <item name="android:textAppearance">?attr/textAppearanceTitleSmall</item>
         <item name="android:textColor">?attr/colorPrimary</item>
     </style>

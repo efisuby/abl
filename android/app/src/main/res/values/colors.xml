@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Warm dark palette: charcoal surfaces with an amber accent (dark-only app). -->
+    <color name="abl_primary">#F2B66B</color>
+    <color name="abl_on_primary">#412A00</color>
+    <color name="abl_primary_container">#5E4010</color>
+    <color name="abl_on_primary_container">#FFDDB0</color>
+
+    <color name="abl_secondary">#DDC3A3</color>
+    <color name="abl_on_secondary">#3E2D16</color>
+    <color name="abl_secondary_container">#56432B</color>
+    <color name="abl_on_secondary_container">#FADEBD</color>
+
+    <color name="abl_tertiary">#B3CFA3</color>
+    <color name="abl_on_tertiary">#1F3716</color>
+    <color name="abl_tertiary_container">#364E2B</color>
+    <color name="abl_on_tertiary_container">#CFEBBD</color>
+
+    <color name="abl_error">#FFB4AB</color>
+    <color name="abl_on_error">#690005</color>
+    <color name="abl_error_container">#93000A</color>
+    <color name="abl_on_error_container">#FFDAD6</color>
+
+    <color name="abl_surface">#15120F</color>
+    <color name="abl_on_surface">#EAE1D9</color>
+    <color name="abl_on_surface_variant">#D3C4B4</color>
+    <color name="abl_surface_dim">#15120F</color>
+    <color name="abl_surface_bright">#3C3834</color>
+    <color name="abl_surface_container_lowest">#100D0A</color>
+    <color name="abl_surface_container_low">#1E1B17</color>
+    <color name="abl_surface_container">#221F1B</color>
+    <color name="abl_surface_container_high">#2D2925</color>
+    <color name="abl_surface_container_highest">#383430</color>
+    <color name="abl_outline">#9C8F80</color>
+    <color name="abl_outline_variant">#4F4539</color>
+</resources>

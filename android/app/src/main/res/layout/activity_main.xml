@@ -58,7 +58,7 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/continueCard"
-        style="@style/Widget.Material3.CardView.Filled"
+        style="@style/Widget.Abl.Card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
@@ -72,13 +72,11 @@
             android:orientation="horizontal"
             android:padding="12dp">
 
-            <ImageView
+            <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/continueCover"
+                style="@style/Widget.Abl.Cover"
                 android:layout_width="@dimen/continue_cover_size"
-                android:layout_height="@dimen/continue_cover_size"
-                android:background="?attr/colorSurfaceVariant"
-                android:importantForAccessibility="no"
-                android:scaleType="centerCrop" />
+                android:layout_height="@dimen/continue_cover_size" />
 
             <LinearLayout
                 android:layout_width="0dp"
