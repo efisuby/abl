@@ -18,6 +18,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.efisuby.abl.R
 import com.efisuby.abl.appContainer
 import com.efisuby.abl.databinding.ActivityBookBinding
+import com.efisuby.abl.data.disk.UploadStatus
+import com.efisuby.abl.domain.model.BookSource
 import com.efisuby.abl.domain.model.BookStatus
 import com.efisuby.abl.domain.model.Bookmark
 import com.efisuby.abl.domain.model.Chapter
@@ -55,6 +57,7 @@ class BookActivity : AppCompatActivity(), BookScreenActions {
                     container.bookActions,
                     container.bookStorage,
                     container.downloadController,
+                    container.uploadController,
                     container.applicationScope,
                     bookId,
                 )
@@ -73,6 +76,10 @@ class BookActivity : AppCompatActivity(), BookScreenActions {
         binding.toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.edit -> startActivity(EditBookActivity.intent(this, bookId))
+                R.id.upload -> {
+                    viewModel.upload()
+                    Toast.makeText(this, R.string.upload_started, Toast.LENGTH_SHORT).show()
+                }
                 R.id.delete -> confirmDelete()
                 else -> return@setOnMenuItemClickListener false
             }
@@ -91,6 +98,9 @@ class BookActivity : AppCompatActivity(), BookScreenActions {
                         finish()
                         return@collect
                     }
+                    // Only a book from the device can go up, and only once at a time.
+                    binding.toolbar.menu.findItem(R.id.upload)?.isVisible =
+                        state.book?.source == BookSource.LOCAL && state.upload !is UploadStatus.Running
                     adapter.submit(state)
                 }
             }

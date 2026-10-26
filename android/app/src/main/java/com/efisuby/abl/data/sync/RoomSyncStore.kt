@@ -117,7 +117,7 @@ class RoomSyncStore(
     override suspend fun restoreBook(entry: LibraryEntry, cover: ByteArray?): Boolean {
         val path = entry.remotePath ?: return false
         try {
-            importer.import(resolve(path))
+            importer.import(resolve(path), entry.bookId)
         } catch (e: DiskException.NotFound) {
             return false
         } catch (e: ImportException) {

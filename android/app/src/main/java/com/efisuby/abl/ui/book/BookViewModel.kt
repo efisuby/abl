@@ -3,6 +3,8 @@ package com.efisuby.abl.ui.book
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.efisuby.abl.data.disk.DownloadController
+import com.efisuby.abl.data.disk.UploadController
+import com.efisuby.abl.data.disk.UploadStatus
 import com.efisuby.abl.data.importer.BookStorage
 import com.efisuby.abl.data.importer.DownloadFailure
 import com.efisuby.abl.data.repository.BookActions
@@ -40,6 +42,8 @@ data class BookUiState(
     val size: BookSize? = null,
     /** Why the last download of this cloud book stopped, shown until the user retries or skips the file. */
     val failure: DownloadFailure? = null,
+    /** Progress or failure of "Upload to cloud" for this book, null when none is running. */
+    val upload: UploadStatus? = null,
 ) {
     /** The chapter playback continues from, if the book was started. */
     val currentChapterId: String? get() = progress?.chapterId?.takeIf { book?.status == BookStatus.IN_PROGRESS }
@@ -63,6 +67,7 @@ class BookViewModel(
     private val actions: BookActions,
     private val storage: BookStorage,
     private val downloads: DownloadController,
+    private val uploads: UploadController,
     /** Deletion and status writes outlive the screen that asked for them. */
     private val writeScope: CoroutineScope,
     private val bookId: String,
@@ -95,9 +100,9 @@ class BookViewModel(
             library.observeChapters(bookId),
             bookmarks.observe(bookId),
             progress.observe(bookId),
-            combine(size, failure) { size, failure -> size to failure },
-        ) { book, chapters, marks, saved, (size, failure) ->
-            BookUiState(book, chapters, marks, saved, loaded = true, size = size, failure = failure)
+            combine(size, failure, uploads.tracker.state) { size, failure, uploading -> Triple(size, failure, uploading[bookId]) },
+        ) { book, chapters, marks, saved, (size, failure, upload) ->
+            BookUiState(book, chapters, marks, saved, loaded = true, size = size, failure = failure, upload = upload)
         }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BookUiState())
 
@@ -111,6 +116,10 @@ class BookViewModel(
             downloads.skipFile(bookId, file)
             downloads.start(bookId)
         }
+    }
+
+    fun upload() {
+        writeScope.launch { uploads.start(bookId) }
     }
 
     fun cancelDownload() {

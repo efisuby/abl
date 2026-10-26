@@ -53,9 +53,11 @@ object RetryPolicy {
         error is FileDownloadException -> isTransient(error.cause)
         error is ChecksumMismatchException -> false
         error is DownloadHttpException -> error.code >= 500 || error.code == 429 || error.code == 408
+        error is UploadHttpException -> error.code != 507 && (error.code >= 500 || error.code == 429 || error.code == 408)
         error is IOException -> true
         error is DiskException.RateLimited -> true
-        error is DiskException.Http -> error.code >= 500
+        // 507: the Disk is full, waiting does not help.
+        error is DiskException.Http -> error.code >= 500 && error.code != 507
         else -> false
     }
 

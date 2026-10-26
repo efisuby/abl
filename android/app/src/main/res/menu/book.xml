@@ -7,6 +7,10 @@
         android:title="@string/book_edit"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/upload"
+        android:title="@string/upload_book"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/delete"
         android:title="@string/book_delete"
         app:showAsAction="never" />

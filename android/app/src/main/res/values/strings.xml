@@ -189,6 +189,15 @@
     <string name="download_failed_message">Диск не отдаёт файл «%1$s». Можно повторить загрузку или пропустить этот файл и скачать остальные.</string>
     <string name="download_retry">Повторить</string>
     <string name="download_skip_file">Пропустить файл</string>
+    <string name="upload_book">Выгрузить в облако</string>
+    <string name="upload_started">Выгрузка началась</string>
+    <string name="upload_notification_title">Выгрузка книги</string>
+    <string name="upload_running">Выгрузка в облако: %1$d%%</string>
+    <string name="upload_failed_sign_in">Выгрузка остановлена: войдите в Яндекс заново</string>
+    <string name="upload_failed_quota">Выгрузка остановлена: на Диске не осталось места</string>
+    <string name="upload_failed_server">Выгрузка остановлена: Диск не принял файл, попробуйте позже</string>
+    <string name="upload_failed_network">Выгрузка остановлена: нет связи с Диском</string>
+    <string name="upload_failed_other">Выгрузка остановлена из-за ошибки</string>
     <string name="download_removed">Загрузка удалена, книга осталась в облаке</string>
     <string name="book_size_device">На устройстве: %1$s</string>
     <string name="book_size_cloud">Размер: %1$s</string>

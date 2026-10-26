@@ -42,6 +42,12 @@ class FakeDiskServer : AutoCloseable {
                 val url = request.requestUrl!!
                 val path = url.queryParameter("path").orEmpty()
                 return when {
+                    request.method == "PUT" && url.encodedPath.startsWith("/put/") -> {
+                        files["disk:/" + decode(url.encodedPath.removePrefix("/put/"))] = request.body.readByteArray()
+                        MockResponse().setResponseCode(201)
+                    }
+                    url.encodedPath.endsWith("/resources/upload") ->
+                        json("""{"href":"${server.url("/put/" + encode(path.removePrefix("disk:/")))}","method":"PUT"}""")
                     url.encodedPath.startsWith("/file/") -> serveFile(request, "disk:/" + url.encodedPath.removePrefix("/file/").let(::decode))
                     url.encodedPath.endsWith("/resources/download") ->
                         if (files.containsKey(path)) json("""{"href":"${server.url("/file/" + encode(path.removePrefix("disk:/")))}","method":"GET"}""") else notFound()
@@ -84,6 +90,7 @@ class FakeDiskServer : AutoCloseable {
     }
 
     private fun list(path: String, limit: Int, offset: Int): MockResponse {
+        files[path]?.let { return json("""{"name":"${path.substringAfterLast('/')}","path":"$path","type":"file","size":${it.size},"md5":"${md5(it)}"}""") }
         if (path !in folders) return notFound()
         val prefix = if (path.endsWith("/")) path else "$path/"
         val children = (folders.filter { it != path && it.startsWith(prefix) && '/' !in it.removePrefix(prefix) }.map { it to null } +

@@ -13,6 +13,11 @@ import com.efisuby.abl.data.sync.WorkManagerSyncScheduler
 import com.efisuby.abl.data.auth.keystoreCipher
 import com.efisuby.abl.data.db.AblDatabase
 import com.efisuby.abl.data.disk.BookDownloader
+import com.efisuby.abl.data.disk.BookUploader
+import com.efisuby.abl.data.disk.UploadController
+import com.efisuby.abl.data.disk.UploadScheduler
+import com.efisuby.abl.data.disk.UploadTracker
+import com.efisuby.abl.data.disk.WorkManagerUploadScheduler
 import com.efisuby.abl.data.disk.CloudBookImporter
 import com.efisuby.abl.data.disk.CloudLibraryAdder
 import com.efisuby.abl.data.disk.DiskApi
@@ -144,6 +149,38 @@ class AppContainer(context: Context) {
 
                 override fun cancel(bookId: String) = downloadScheduler.cancel(bookId)
             },
+        )
+    }
+
+    val bookUploader: BookUploader by lazy {
+        BookUploader(
+            disk = diskApi,
+            // A big file is sent in one request; the default 10 s write timeout would cut it.
+            http = httpClient.newBuilder()
+                .writeTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+                .build(),
+            storage = bookStorage,
+            library = libraryRepository,
+        )
+    }
+
+    val uploadTracker: UploadTracker = UploadTracker()
+
+    /** A `var` so tests can replace WorkManager with a fake. */
+    var uploadScheduler: UploadScheduler = WorkManagerUploadScheduler(appContext)
+
+    val uploadController: UploadController by lazy {
+        UploadController(
+            libraryRepository,
+            settingsRepository,
+            // Looked up per call, so a scheduler swapped in by a test is used by an existing controller too.
+            object : UploadScheduler {
+                override fun enqueue(bookId: String, wifiOnly: Boolean) = uploadScheduler.enqueue(bookId, wifiOnly)
+
+                override fun cancel(bookId: String) = uploadScheduler.cancel(bookId)
+            },
+            uploadTracker,
         )
     }
 

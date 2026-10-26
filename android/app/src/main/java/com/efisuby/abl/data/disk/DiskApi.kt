@@ -29,6 +29,16 @@ interface DiskLinks {
     suspend fun downloadLink(path: String): DiskLink
 }
 
+/** What uploading a book to the app folder needs from Disk; faked in tests. */
+interface DiskUploads {
+    suspend fun ensureFolder(path: String)
+
+    suspend fun uploadLink(path: String, overwrite: Boolean = true): DiskLink
+
+    /** The resource at [path], or null if there is none. */
+    suspend fun find(path: String): DiskResource?
+}
+
 /** Every entry of one level, paging through large folders. */
 suspend fun DiskSource.listAll(path: String, pageSize: Int = 100): List<DiskResource> {
     val all = mutableListOf<DiskResource>()
@@ -51,7 +61,7 @@ class DiskApi(
     private val backoffMs: Long = 1_000,
     /** Replaced in tests so backoff does not slow them down. */
     private val sleep: suspend (Long) -> Unit = { delay(it) },
-) : DiskSource, DiskLinks {
+) : DiskSource, DiskLinks, DiskUploads {
 
     private val base: HttpUrl = baseUrl.toHttpUrl()
 
@@ -75,7 +85,14 @@ class DiskApi(
     override suspend fun downloadLink(path: String): DiskLink =
         get(resourcesUrl("download").newBuilder().addQueryParameter("path", path).build(), path)
 
-    suspend fun uploadLink(path: String, overwrite: Boolean = true): DiskLink =
+    override suspend fun find(path: String): DiskResource? =
+        try {
+            resource(path)
+        } catch (e: DiskException.NotFound) {
+            null
+        }
+
+    override suspend fun uploadLink(path: String, overwrite: Boolean): DiskLink =
         get(
             resourcesUrl("upload").newBuilder()
                 .addQueryParameter("path", path)
@@ -104,7 +121,7 @@ class DiskApi(
      * that exist are fine. Disk creates one level per request and answers 409 for a missing parent
      * as well as for an existing folder, so the chain is built top-down.
      */
-    suspend fun ensureFolder(path: String) {
+    override suspend fun ensureFolder(path: String) {
         val prefixEnd = path.indexOf(":/").takeIf { it >= 0 }?.plus(2) ?: 0
         val prefix = path.substring(0, prefixEnd)
         var current = prefix

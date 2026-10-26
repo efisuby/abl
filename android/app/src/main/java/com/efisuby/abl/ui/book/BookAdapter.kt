@@ -16,6 +16,9 @@ import com.efisuby.abl.databinding.ItemBookHeaderBinding
 import com.efisuby.abl.databinding.ItemBookmarkBinding
 import com.efisuby.abl.databinding.ItemChapterBinding
 import com.efisuby.abl.databinding.ItemSectionBinding
+import com.efisuby.abl.data.disk.UploadError
+import com.efisuby.abl.data.disk.UploadStatus
+import com.google.android.material.color.MaterialColors
 import com.efisuby.abl.domain.model.Book
 import com.efisuby.abl.domain.model.BookSource
 import com.efisuby.abl.domain.model.BookStatus
@@ -132,6 +135,7 @@ class BookAdapter(
             }
             binding.size.isVisible = state.size != null
             bindDownload(book)
+            bindUpload(state.upload)
             val failure = state.failure
             binding.downloadError.isVisible = failure != null
             binding.downloadError.text = failure?.let {
@@ -156,6 +160,27 @@ class BookAdapter(
                 val size = context.resources.getDimensionPixelSize(R.dimen.book_cover_size)
                 coverJob = scope.launch { binding.cover.setCover(loadCover(book.coverPath, size)) }
             }
+        }
+
+        private fun bindUpload(upload: UploadStatus?) {
+            val context = binding.root.context
+            binding.uploadStatus.isVisible = upload != null
+            binding.uploadStatus.text = when (upload) {
+                null -> null
+                is UploadStatus.Running -> context.getString(R.string.upload_running, upload.percent)
+                is UploadStatus.Failed -> context.getString(
+                    when (upload.error) {
+                        UploadError.SIGN_IN -> R.string.upload_failed_sign_in
+                        UploadError.QUOTA -> R.string.upload_failed_quota
+                        UploadError.SERVER -> R.string.upload_failed_server
+                        UploadError.NETWORK -> R.string.upload_failed_network
+                        UploadError.OTHER -> R.string.upload_failed_other
+                    },
+                )
+            }
+            binding.uploadStatus.setTextColor(
+                MaterialColors.getColor(binding.uploadStatus, if (upload is UploadStatus.Failed) androidx.appcompat.R.attr.colorError else com.google.android.material.R.attr.colorOnSurfaceVariant),
+            )
         }
 
         private fun bindDownload(book: Book) {

@@ -52,6 +52,15 @@ class CloudBookImporterTest {
     }
 
     @Test
+    fun aBookUploadedFromAnotherDeviceKeepsItsId() = runBlocking {
+        val book = importer().import(dir("disk:/b/Автор - Книга"), bookId = "uploaded-id").book
+
+        assertEquals("uploaded-id", book.id)
+        assertEquals("uploaded-id", library.chapters.getValue("uploaded-id").first().bookId)
+        assertEquals("uploaded-id", BookManifestCodec.read(storage.manifestFile("uploaded-id")).id)
+    }
+
+    @Test
     fun folderBecomesACloudBookWithAChapterPerFileInNaturalOrder() = runBlocking {
         val book = importer().import(dir("disk:/b/Автор - Книга")).book
 

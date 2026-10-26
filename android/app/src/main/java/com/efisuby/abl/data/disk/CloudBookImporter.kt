@@ -37,8 +37,11 @@ class CloudBookImporter(
 
     class Result(val book: Book, /** False when the same cloud path was imported before. */ val created: Boolean)
 
-    suspend fun import(resource: DiskResource): Result {
-        val bookId = bookId(resource.path)
+    /**
+     * [bookId] is the hash of the path unless the book is known under another id: a book that
+     * another device uploaded keeps the id it had there, so its progress and bookmarks match.
+     */
+    suspend fun import(resource: DiskResource, bookId: String = bookId(resource.path)): Result {
         library.getBook(bookId)?.let { return Result(it, created = false) }
 
         val files = remoteFiles(resource)
