@@ -3,6 +3,7 @@ package com.efisuby.abl.ui.importer
 import android.content.Context
 import android.net.Uri
 import android.view.View
+import android.widget.TextView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
@@ -22,7 +23,9 @@ import com.efisuby.abl.data.importer.SourceFile
 import com.efisuby.abl.di.AppContainer
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import com.google.android.material.progressindicator.BaseProgressIndicator
 import org.hamcrest.Matcher
+import org.junit.Assert.assertTrue
 import org.hamcrest.Matchers.allOf
 import org.junit.After
 import org.junit.Before
@@ -46,6 +49,7 @@ class ImportScreenTest {
     private lateinit var fixtures: SafImportSources
     private lateinit var booksBefore: Set<String>
     private val gate = CountDownLatch(1)
+    private val mode = FixtureDocumentsProvider.Mode()
 
     @Before
     fun setUp() {
@@ -53,7 +57,7 @@ class ImportScreenTest {
         container = context.appContainer
         originalSources = container.importSources
         val testContext = InstrumentationRegistry.getInstrumentation().context
-        val resolver = FixtureDocumentsProvider.install(testContext, context, File(context.cacheDir, "fixtures"))
+        val resolver = FixtureDocumentsProvider.install(testContext, context, File(context.cacheDir, "fixtures"), mode)
         fixtures = SafImportSources(resolver)
         booksBefore = runBlocking { container.libraryRepository.observeBooks().first().map { it.id }.toSet() }
     }
@@ -88,6 +92,45 @@ class ImportScreenTest {
             onView(withText("Ivan Yefremov")).check(matches(isDisplayed()))
             onView(withText("Chapter 1")).check(matches(isDisplayed()))
         }
+    }
+
+    @Test
+    fun anUnknownSizeShowsAnIndeterminateBar() {
+        mode.sizeUnknown = true
+        container.importSources = GatedSources(fixtures, gate)
+
+        ActivityScenario.launch<ImportActivity>(importIntent("tagged")).use { scenario ->
+            // Espresso waits for the main thread to go idle, which an indeterminate bar never lets it
+            // do, so the views are read directly.
+            val expected = context.getString(R.string.import_file, 1, 3, "01.mp3")
+            val deadline = System.currentTimeMillis() + 10_000
+            var shown = false
+            while (!shown && System.currentTimeMillis() < deadline) {
+                scenario.onActivity { shown = it.findViewById<TextView>(R.id.file).text.toString() == expected }
+                if (!shown) Thread.sleep(100)
+            }
+            assertTrue("the first file is not shown", shown)
+            scenario.onActivity {
+                assertTrue(
+                    "the bar must be indeterminate",
+                    it.findViewById<BaseProgressIndicator<*>>(R.id.progress).isIndeterminate,
+                )
+            }
+            gate.countDown()
+            waitFor(withText("The Bull's Hour"))
+        }
+    }
+
+    @Test
+    fun aDroppedConnectionShowsTheErrorAndLeavesNothing() {
+        mode.failAfterBytes = 1_000
+        container.importSources = fixtures
+
+        ActivityScenario.launch<ImportActivity>(importIntent("tagged")).use {
+            waitFor(withText(R.string.import_error_io))
+            onView(withText(R.string.import_close)).check(matches(isDisplayed()))
+        }
+        runBlocking { check(container.libraryRepository.observeBooks().first().all { it.id in booksBefore }) }
     }
 
     @Test

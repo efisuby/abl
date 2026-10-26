@@ -19,7 +19,30 @@ import java.io.FileNotFoundException
  * through the same `tree/…/document/…/children` URIs the system picker hands out. Document ids
  * are paths relative to [root].
  */
-class FixtureDocumentsProvider(private val root: File) : ContentProvider() {
+class FixtureDocumentsProvider(private val root: File, private val mode: Mode = Mode()) : ContentProvider() {
+
+    /**
+     * Quirks of cloud providers such as Google Drive; change them between steps of a test.
+     * All are off by default.
+     */
+    class Mode {
+        /** The size column is null, as Drive reports it for some files. */
+        @Volatile var sizeUnknown = false
+
+        /** Reading a file fails with an I/O error after this many bytes (a dropped connection). */
+        @Volatile var failAfterBytes: Long? = null
+
+        /** Reading a file ends cleanly after this many bytes although it is larger. */
+        @Volatile var endEarlyAfterBytes: Long? = null
+
+        /** Opening a document throws `SecurityException`, as after access was revoked. */
+        @Volatile var denyOpen = false
+
+        /** Pause before each 8 KiB chunk. */
+        @Volatile var chunkDelayMs = 0L
+
+        internal val streaming get() = failAfterBytes != null || endEarlyAfterBytes != null || chunkDelayMs > 0
+    }
 
     override fun onCreate(): Boolean = true
 
@@ -45,8 +68,41 @@ class FixtureDocumentsProvider(private val root: File) : ContentProvider() {
         return cursor
     }
 
-    override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor =
-        ParcelFileDescriptor.open(fileFor(DocumentsContract.getDocumentId(uri)), ParcelFileDescriptor.MODE_READ_ONLY)
+    override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
+        if (this.mode.denyOpen) throw SecurityException("Access to $uri was revoked")
+        val file = fileFor(DocumentsContract.getDocumentId(uri))
+        if (!this.mode.streaming) return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+
+        // Served through a pipe so that a slow or broken connection can be imitated.
+        val pipe = ParcelFileDescriptor.createPipe()
+        val settings = this.mode
+        Thread {
+            try {
+                ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]).use { out ->
+                    file.inputStream().use { input ->
+                        val buffer = ByteArray(8 * 1024)
+                        var sent = 0L
+                        while (true) {
+                            val read = input.read(buffer)
+                            if (read < 0) break
+                            val allowed = listOfNotNull(settings.failAfterBytes, settings.endEarlyAfterBytes).minOrNull()
+                            val chunk = if (allowed == null) read else minOf(read.toLong(), allowed - sent).toInt()
+                            if (chunk > 0) out.write(buffer, 0, chunk)
+                            sent += chunk
+                            if (allowed != null && sent >= allowed) {
+                                if (settings.failAfterBytes != null) pipe[1].closeWithError("connection lost")
+                                break
+                            }
+                            if (settings.chunkDelayMs > 0) Thread.sleep(settings.chunkDelayMs)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // The reader went away (cancelled import): nothing left to serve.
+            }
+        }.start()
+        return pipe[0]
+    }
 
     private fun fileFor(documentId: String): File {
         val file = File(root, documentId)
@@ -62,7 +118,7 @@ class FixtureDocumentsProvider(private val root: File) : ContentProvider() {
                     // Same column names as OpenableColumns, so single-document queries work too.
                     Document.COLUMN_DISPLAY_NAME -> file.name
                     Document.COLUMN_MIME_TYPE -> if (file.isDirectory) Document.MIME_TYPE_DIR else "audio/mpeg"
-                    Document.COLUMN_SIZE -> if (file.isDirectory) null else file.length()
+                    Document.COLUMN_SIZE -> if (file.isDirectory || mode.sizeUnknown) null else file.length()
                     else -> null
                 }
             },
@@ -88,10 +144,10 @@ class FixtureDocumentsProvider(private val root: File) : ContentProvider() {
          * Copies the `fixtures/` assets of the test APK into [target] and returns a resolver that
          * serves them under [AUTHORITY].
          */
-        fun install(testContext: Context, appContext: Context, target: File): MockContentResolver {
+        fun install(testContext: Context, appContext: Context, target: File, mode: Mode = Mode()): MockContentResolver {
             target.deleteRecursively()
             copyAssets(testContext, "fixtures", target)
-            val provider = FixtureDocumentsProvider(target)
+            val provider = FixtureDocumentsProvider(target, mode)
             provider.attachInfo(appContext, ProviderInfo().apply { authority = AUTHORITY })
             return MockContentResolver(appContext).apply { addProvider(AUTHORITY, provider) }
         }

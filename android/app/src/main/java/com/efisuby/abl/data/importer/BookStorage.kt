@@ -54,13 +54,19 @@ class BookStorage(val root: File) {
             source.open().use { input ->
                 part.outputStream().use { output ->
                     val buffer = ByteArray(BUFFER_SIZE)
+                    var total = 0L
                     while (true) {
                         currentCoroutineContext().ensureActive()
                         val read = input.read(buffer)
                         if (read < 0) break
                         output.write(buffer, 0, read)
                         digest.update(buffer, 0, read)
+                        total += read
                         onBytes(read.toLong())
+                    }
+                    // A provider (a cloud drive on a bad link) can end the stream early without an error.
+                    if (source.sizeBytes > 0 && total < source.sizeBytes) {
+                        throw IOException("${source.relativePath} ended at $total of ${source.sizeBytes} bytes")
                     }
                     output.fd.sync()
                 }

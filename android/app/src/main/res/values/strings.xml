@@ -3,9 +3,9 @@
     <string name="app_name">AudioBook Player</string>
 
     <string name="library_title">Библиотека</string>
-    <string name="library_empty">Здесь пока пусто. Добавьте папку с mp3 или файл m4b.</string>
-    <string name="library_import_folder">Добавить папку</string>
-    <string name="library_import_file">Добавить файл</string>
+    <string name="library_empty">Здесь пока пусто. Добавьте книгу с устройства, из Google Drive или Яндекс.Диска.</string>
+    <string name="library_import_folder">Папка с устройства или Google Drive</string>
+    <string name="library_import_file">Файл с устройства или Google Drive</string>
     <string name="library_add">Добавить книгу</string>
     <string name="library_add_fab">Добавить</string>
     <string name="library_add_cloud">Из Яндекс.Диска</string>
