@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.Data
@@ -19,8 +18,8 @@ import androidx.work.WorkerParameters
 import com.efisuby.abl.R
 import com.efisuby.abl.appContainer
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 /** [DownloadScheduler] on WorkManager: one unique job per book, constrained by the network type. */
 class WorkManagerDownloadScheduler(context: Context) : DownloadScheduler {
@@ -31,8 +30,7 @@ class WorkManagerDownloadScheduler(context: Context) : DownloadScheduler {
         val request = OneTimeWorkRequestBuilder<DownloadWorker>()
             .setInputData(Data.Builder().putString(DownloadWorker.KEY_BOOK_ID, bookId).build())
             .setConstraints(Constraints.Builder().setRequiredNetworkType(downloadNetworkType(wifiOnly)).build())
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
-            .build()
+                        .build()
         work.enqueueUniqueWork(workName(bookId), ExistingWorkPolicy.REPLACE, request)
     }
 
@@ -41,6 +39,21 @@ class WorkManagerDownloadScheduler(context: Context) : DownloadScheduler {
     }
 
     private fun workName(bookId: String) = "download-$bookId"
+}
+
+/** A failed download is tried again every [DELAY_MS], at most [MAX_ATTEMPTS] times in total. */
+object RetryPolicy {
+    const val DELAY_MS = 15_000L
+    const val MAX_ATTEMPTS = 15
+
+    /** Network and server trouble passes; a rejected token, a vanished file or a bad checksum does not. */
+    fun isTransient(error: Exception): Boolean = when {
+        error is ChecksumMismatchException -> false
+        error is IOException -> true
+        error is DiskException.RateLimited -> true
+        error is DiskException.Http -> error.code >= 500
+        else -> false
+    }
 }
 
 /** Downloads one book in a `dataSync` foreground service with a progress notification. */
@@ -53,24 +66,28 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
 
         showProgress(book.title, 0)
         var lastShown = 0L
-        try {
-            container.bookDownloader.run(bookId) { done, total ->
-                val now = System.currentTimeMillis()
-                if (now - lastShown >= PROGRESS_INTERVAL_MS) {
-                    lastShown = now
-                    setForegroundAsync(foregroundInfo(book.title, if (total > 0) (done * 100 / total).toInt() else 0))
+        var attempt = 0
+        while (true) {
+            attempt++
+            try {
+                container.bookDownloader.run(bookId) { done, total ->
+                    val now = System.currentTimeMillis()
+                    if (now - lastShown >= PROGRESS_INTERVAL_MS) {
+                        lastShown = now
+                        setForegroundAsync(foregroundInfo(book.title, if (total > 0) (done * 100 / total).toInt() else 0))
+                    }
                 }
+                return Result.success()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                if (!RetryPolicy.isTransient(e) || attempt >= RetryPolicy.MAX_ATTEMPTS) {
+                    container.bookDownloader.markFailed(bookId)
+                    return Result.failure()
+                }
+                // The partial file stays; the next attempt continues from its last byte.
+                delay(RetryPolicy.DELAY_MS)
             }
-            return Result.success()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // Network trouble is worth another attempt; a rejected token or a vanished file is not.
-            val transient = e is IOException && e !is ChecksumMismatchException ||
-                e is DiskException.RateLimited || (e is DiskException.Http && e.code >= 500)
-            if (transient && runAttemptCount < MAX_ATTEMPTS) return Result.retry()
-            container.bookDownloader.markFailed(bookId)
-            return Result.failure()
         }
     }
 
@@ -112,7 +129,6 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
         const val KEY_BOOK_ID = "bookId"
         private const val CHANNEL_ID = "downloads"
         private const val NOTIFICATION_ID = 2
-        private const val MAX_ATTEMPTS = 5
         private const val PROGRESS_INTERVAL_MS = 1_000L
     }
 }
