@@ -77,7 +77,7 @@
 ## 9. Integration and verification
 
 - [x] 9.1 Walk the end-to-end scenario on a physical device: sign-in, importing a book from Disk, listening with the screen locked, adding a bookmark, switching devices and checking progress
-- [ ] 9.2 Build release with R8 and verify serialization, token encryption and playback in the release build
+- [x] 9.2 Build release with R8 and verify serialization, token encryption and playback in the release build
 - [x] 9.3 Reach zero warnings from `./gradlew :app:lintDebug` and pass `openspec validate --strict`
 - [x] 9.4 Update `README.md` (screens, scenarios, limitations) and `docs/spikes/m4b-chapters.md`
 - [x] 9.5 Run all unit and instrumented tests with a single command and record the result
