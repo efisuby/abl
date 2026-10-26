@@ -27,6 +27,8 @@ class SyncRunner(
     private val signedIn: () -> Boolean,
     private val onSuccess: suspend (finishedAt: Long) -> Unit,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** For diagnostics; gets the failure, never a token (exceptions carry class, HTTP code or a short I/O message). */
+    private val onFailure: (Exception) -> Unit = {},
 ) {
 
     suspend fun run(): SyncOutcome {
@@ -38,6 +40,7 @@ class SyncRunner(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            onFailure(e)
             if (RetryPolicy.isTransient(e)) SyncOutcome.RETRY else SyncOutcome.FAILED
         }
     }

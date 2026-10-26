@@ -21,15 +21,15 @@ interface SyncScheduler {
     /** [immediate] skips the short settling delay used for background triggers (a manual start). */
     fun request(immediate: Boolean = false)
 
-    /** True while a synchronization is waiting for the network or running. */
+    /** True while a synchronization is running. */
     val active: Flow<Boolean>
 }
 
 /**
  * [SyncScheduler] on WorkManager. The job needs a network, so a request made offline waits and
  * starts when the network appears (the "network appearance" trigger); a failed run is repeated
- * with exponential backoff. Requests queue behind a running job instead of being dropped, so a
- * change made during a synchronization is picked up by the next one.
+ * with exponential backoff. Background requests do not pile up behind a pending job; a manual
+ * one replaces it and starts at once.
  */
 class WorkManagerSyncScheduler(context: Context) : SyncScheduler {
 
@@ -42,11 +42,15 @@ class WorkManagerSyncScheduler(context: Context) : SyncScheduler {
             .setInitialDelay(if (immediate) 0 else SETTLE_SECONDS, TimeUnit.SECONDS)
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_SECONDS, TimeUnit.SECONDS)
             .build()
-        work.enqueueUniqueWork(UNIQUE_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
+        // Every run publishes the whole difference, so a background request while a job is waiting
+        // or retrying adds nothing. A manual request replaces it: queued behind a job that sits in
+        // backoff it would never start, and cutting a running exchange short loses nothing.
+        val policy = if (immediate) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP
+        work.enqueueUniqueWork(UNIQUE_NAME, policy, request)
     }
 
     override val active: Flow<Boolean> = work.getWorkInfosForUniqueWorkFlow(UNIQUE_NAME).map { infos ->
-        infos.any { it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING || it.state == WorkInfo.State.BLOCKED }
+        infos.any { it.state == WorkInfo.State.RUNNING }
     }
 
     private companion object {

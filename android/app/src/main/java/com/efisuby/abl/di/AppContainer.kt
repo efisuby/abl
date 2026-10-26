@@ -149,15 +149,28 @@ class AppContainer(context: Context) {
 
     val cloudLibraryAdder: CloudLibraryAdder by lazy { CloudLibraryAdder(cloudBookImporter, downloadController) }
 
+    /** The default 10 s timeouts are too short for many small requests over a slow or VPN link. */
+    private val syncHttpClient: OkHttpClient by lazy {
+        httpClient.newBuilder()
+            .connectTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .build()
+    }
+    private val syncDiskApi: DiskApi by lazy { DiskApi(syncHttpClient, authRepository) }
+
     val syncRunner: SyncRunner by lazy {
         SyncRunner(
             engine = SyncEngine(
-                RoomSyncStore(database, settingsRepository, bookStorage, cloudBookImporter, diskApi::resource),
-                DiskCloudFiles(diskApi, httpClient),
+                RoomSyncStore(database, settingsRepository, bookStorage, cloudBookImporter, syncDiskApi::resource),
+                DiskCloudFiles(syncDiskApi, syncHttpClient),
                 deviceIdProvider.deviceId(),
             ),
             signedIn = { authRepository.state.value == AuthState.SIGNED_IN },
             onSuccess = settingsRepository::setLastSyncAt,
+            onFailure = { e ->
+                android.util.Log.w("SyncRunner", "Sync failed: ${e.javaClass.simpleName}" + (e.message?.let { " ($it)" } ?: ""))
+            },
         )
     }
 
