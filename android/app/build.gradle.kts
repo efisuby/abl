@@ -120,6 +120,9 @@ dependencies {
     // Yandex ID sign-in (returns an OAuth access token for the Disk REST API)
     implementation(libs.yandex.authsdk)
 
+    // Yandex Disk REST client
+    implementation(libs.okhttp)
+
     // Local persistence
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
@@ -130,6 +133,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.core.ktx)

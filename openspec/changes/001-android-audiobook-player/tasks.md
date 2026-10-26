@@ -55,7 +55,7 @@
 
 ## 7. Yandex Disk: browser and downloads
 
-- [ ] 7.1 Implement the REST client (`/v1/disk/resources`, `download`, `upload`) with models and 401/404/429 handling; verify with MockWebServer tests, including retry after 429
+- [x] 7.1 Implement the REST client (`/v1/disk/resources`, `download`, `upload`) with models and 401/404/429 handling; verify with MockWebServer tests, including retry after 429
 - [ ] 7.2 Build the cloud folder browser with lazy level loading; verify with a UI test on a mock: navigating into a folder requests only its contents
 - [ ] 7.3 Implement cloud book import: creating the record, detecting the format, queueing the download; verify with a unit test: `bookId` is the same for two imports of the same path
 - [ ] 7.4 Implement the download worker with `Range` resume, `md5` verification and a `dataSync` foreground notification; verify with a MockWebServer test: an interruption mid-way continues from the same byte
