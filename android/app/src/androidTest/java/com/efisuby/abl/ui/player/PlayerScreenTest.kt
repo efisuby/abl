@@ -10,17 +10,21 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.efisuby.abl.MainActivity
 import com.efisuby.abl.R
+import com.efisuby.abl.ui.waitForView
 import com.efisuby.abl.appContainer
 import com.efisuby.abl.data.importer.FixtureDocumentsProvider
 import com.efisuby.abl.data.importer.SafTreeSource
 import com.efisuby.abl.di.AppContainer
 import com.efisuby.abl.playback.PlaybackService
 import kotlinx.coroutines.runBlocking
+import org.hamcrest.Matchers.allOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -111,6 +115,20 @@ class PlayerScreenTest {
             assertEquals(1, requests.get())
         } finally {
             container.syncScheduler = original
+        }
+    }
+
+    @Test
+    fun libraryMiniPlayerShowsThePlayingBookAndOpensThePlayer() {
+        ActivityScenario.launch<PlayerActivity>(PlayerActivity.intent(context, bookId)).use {
+            val controller = connectProbe()
+            waitUntil("the book is loaded") { onMain { controller.currentMediaItem?.mediaId?.startsWith(bookId) == true } }
+
+            ActivityScenario.launch(MainActivity::class.java).use {
+                waitForView(allOf(withId(R.id.miniPlayer), isDisplayed()))
+                onView(withId(R.id.miniPlayer)).perform(click())
+                waitForView(allOf(withId(R.id.playPause), isDisplayed()))
+            }
         }
     }
 

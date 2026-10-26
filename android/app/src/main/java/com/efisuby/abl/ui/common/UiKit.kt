@@ -3,6 +3,7 @@ package com.efisuby.abl.ui.common
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.view.View
+import android.widget.ImageView
 import androidx.annotation.StringRes
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -52,6 +53,11 @@ suspend fun loadCover(path: String?, maxPx: Int): Bitmap? = withContext(Dispatch
     var sample = 1
     while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxPx) sample *= 2
     BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = sample })
+}
+
+/** Shows [bitmap], or the book placeholder for a book without a cover. */
+fun ImageView.setCover(bitmap: Bitmap?) {
+    if (bitmap != null) setImageBitmap(bitmap) else setImageResource(R.drawable.ic_cover_placeholder)
 }
 
 @StringRes

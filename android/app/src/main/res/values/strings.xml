@@ -6,6 +6,10 @@
     <string name="library_empty">Здесь пока пусто. Добавьте папку с mp3 или файл m4b.</string>
     <string name="library_import_folder">Добавить папку</string>
     <string name="library_import_file">Добавить файл</string>
+    <string name="library_add">Добавить книгу</string>
+    <string name="library_add_fab">Добавить</string>
+    <string name="library_add_cloud">Из Яндекс.Диска</string>
+    <string name="mini_player_open">Открыть плеер</string>
     <string name="library_search">Поиск по названию, автору, серии</string>
     <string name="library_nothing_found">Ничего не найдено</string>
     <string name="library_reset_filters">Сбросить фильтры</string>

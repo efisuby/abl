@@ -5,6 +5,8 @@
     <dimen name="continue_cover_size">72dp</dimen>
     <dimen name="series_indent">16dp</dimen>
 
+    <dimen name="mini_cover_size">48dp</dimen>
+
     <dimen name="space_8">8dp</dimen>
     <dimen name="space_16">16dp</dimen>
     <dimen name="space_24">24dp</dimen>

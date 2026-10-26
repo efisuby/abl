@@ -9,10 +9,12 @@
         app:showAsAction="ifRoom|collapseActionView" />
     <item
         android:id="@+id/cloud"
+        android:icon="@drawable/ic_cloud"
         android:title="@string/cloud_title"
-        app:showAsAction="never" />
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/settings"
+        android:icon="@drawable/ic_settings"
         android:title="@string/settings_title"
-        app:showAsAction="never" />
+        app:showAsAction="ifRoom" />
 </menu>

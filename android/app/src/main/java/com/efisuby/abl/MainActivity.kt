@@ -27,6 +27,7 @@ import com.efisuby.abl.ui.common.applySystemBarInsets
 import com.efisuby.abl.ui.common.formatDuration
 import com.efisuby.abl.ui.common.labelRes
 import com.efisuby.abl.ui.common.loadCover
+import com.efisuby.abl.ui.common.setCover
 import com.efisuby.abl.ui.importer.ImportActivity
 import com.efisuby.abl.ui.common.needsDownload
 import com.efisuby.abl.ui.common.offerDownload
@@ -37,6 +38,10 @@ import com.efisuby.abl.ui.library.BookListAdapter
 import com.efisuby.abl.ui.library.ContinueListening
 import com.efisuby.abl.ui.library.LibraryUiState
 import com.efisuby.abl.ui.library.LibraryViewModel
+import com.efisuby.abl.ui.library.MiniPlayer
+import com.efisuby.abl.databinding.SheetAddBinding
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -47,6 +52,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var continueCoverPath: String? = null
+    private lateinit var miniPlayer: MiniPlayer
 
     private val viewModel: LibraryViewModel by viewModels {
         viewModelFactory {
@@ -95,10 +101,10 @@ class MainActivity : AppCompatActivity() {
         binding.continueCard.setOnClickListener(continuePlayback)
         binding.continuePlay.setOnClickListener(continuePlayback)
 
+        miniPlayer = MiniPlayer(this, binding, ::updateContinueCard)
         binding.importFolder.setOnClickListener { pickFolder.launch(null) }
-        // Providers report m4b inconsistently (audio/mp4, audio/x-m4b, application/octet-stream);
-        // the importer checks extensions itself and explains a wrong pick.
-        binding.importFile.setOnClickListener { pickFile.launch(arrayOf("audio/*", "application/octet-stream")) }
+        binding.importFile.setOnClickListener { launchFilePicker() }
+        binding.addFab.setOnClickListener { showAddSheet() }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -106,9 +112,48 @@ class MainActivity : AppCompatActivity() {
                     viewModel.state.collect { state -> state?.let { render(it, adapter) } }
                 }
                 launch { viewModel.query.collect(::renderQuery) }
+                launch {
+                    while (true) {
+                        miniPlayer.renderProgress()
+                        delay(MINI_PLAYER_REFRESH_MS)
+                    }
+                }
                 viewModel.continueListening.collect(::renderContinue)
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        miniPlayer.start()
+    }
+
+    override fun onStop() {
+        miniPlayer.stop()
+        super.onStop()
+    }
+
+    // Providers report m4b inconsistently (audio/mp4, audio/x-m4b, application/octet-stream);
+    // the importer checks extensions itself and explains a wrong pick.
+    private fun launchFilePicker() = pickFile.launch(arrayOf("audio/*", "application/octet-stream"))
+
+    private fun showAddSheet() {
+        val dialog = BottomSheetDialog(this)
+        val sheet = SheetAddBinding.inflate(layoutInflater)
+        sheet.sheetFolder.setOnClickListener {
+            dialog.dismiss()
+            pickFolder.launch(null)
+        }
+        sheet.sheetFile.setOnClickListener {
+            dialog.dismiss()
+            launchFilePicker()
+        }
+        sheet.sheetCloud.setOnClickListener {
+            dialog.dismiss()
+            startActivity(CloudActivity.intent(this))
+        }
+        dialog.setContentView(sheet.root)
+        dialog.show()
     }
 
     private fun setUpSearch() {
@@ -185,16 +230,26 @@ class MainActivity : AppCompatActivity() {
         adapter.submitList(state.items)
         val nothingFound = !state.libraryEmpty && state.items.isEmpty()
         binding.empty.isVisible = state.libraryEmpty || nothingFound
+        binding.emptyActions.isVisible = state.libraryEmpty
+        binding.addFab.isVisible = !state.libraryEmpty
         binding.emptyText.setText(if (state.libraryEmpty) R.string.library_empty else R.string.library_nothing_found)
         binding.resetFilters.isVisible = nothingFound && state.query.isFiltered
         binding.filters.isVisible = !state.libraryEmpty
         binding.toolbar.menu.findItem(R.id.search).isVisible = !state.libraryEmpty
-        // The card would hide search results, and the book is one tap away in the list anyway.
-        binding.continueCard.isVisible = viewModel.continueListening.value != null && !state.query.isFiltered
+        updateContinueCard()
+    }
+
+    /**
+     * Hidden while searching (it would push results down; the book is one tap away in the list)
+     * and while the mini player already shows what is playing.
+     */
+    private fun updateContinueCard() {
+        binding.continueCard.isVisible = viewModel.continueListening.value != null &&
+            !viewModel.query.value.isFiltered && !miniPlayer.showing
     }
 
     private fun renderContinue(card: ContinueListening?) {
-        binding.continueCard.isVisible = card != null && viewModel.query.value.isFiltered.not()
+        updateContinueCard()
         if (card == null) return
         binding.continueTitle.text = card.book.title
         binding.continueChapter.text = card.chapterTitle
@@ -206,7 +261,7 @@ class MainActivity : AppCompatActivity() {
         if (card.book.coverPath != continueCoverPath) {
             continueCoverPath = card.book.coverPath
             val size = resources.getDimensionPixelSize(R.dimen.continue_cover_size)
-            lifecycleScope.launch { binding.continueCover.setImageBitmap(loadCover(card.book.coverPath, size)) }
+            lifecycleScope.launch { binding.continueCover.setCover(loadCover(card.book.coverPath, size)) }
         }
     }
 
@@ -225,5 +280,9 @@ class MainActivity : AppCompatActivity() {
         SortOrder.AUTHOR -> R.string.sort_author
         SortOrder.ADDED -> R.string.sort_added
         SortOrder.LAST_LISTENED -> R.string.sort_last_listened
+    }
+
+    private companion object {
+        const val MINI_PLAYER_REFRESH_MS = 1_000L
     }
 }

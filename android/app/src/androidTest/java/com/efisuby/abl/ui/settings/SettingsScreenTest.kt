@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -63,8 +62,7 @@ class SettingsScreenTest {
     @Test
     fun allSectionsAreReachableFromTheLibrary() {
         ActivityScenario.launch(MainActivity::class.java).use {
-            openActionBarOverflowOrOptionsMenu(context)
-            onView(withText(R.string.settings_title)).perform(click())
+            onView(withId(R.id.settings)).perform(click())
 
             waitForView(withId(R.id.wifiOnly))
             onView(withId(R.id.storageUsed)).perform(scrollTo()).check(matches(isDisplayed()))

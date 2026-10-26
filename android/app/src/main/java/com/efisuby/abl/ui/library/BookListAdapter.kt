@@ -16,6 +16,7 @@ import com.efisuby.abl.ui.common.formatDuration
 import com.efisuby.abl.ui.common.labelRes
 import com.efisuby.abl.ui.common.needsDownload
 import com.efisuby.abl.ui.common.loadCover
+import com.efisuby.abl.ui.common.setCover
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -92,12 +93,12 @@ class BookListAdapter(
 
             recycle()
             val size = context.resources.getDimensionPixelSize(R.dimen.list_cover_size)
-            coverJob = scope.launch { binding.cover.setImageBitmap(loadCover(book.coverPath, size)) }
+            coverJob = scope.launch { binding.cover.setCover(loadCover(book.coverPath, size)) }
         }
 
         fun recycle() {
             coverJob?.cancel()
-            binding.cover.setImageDrawable(null)
+            binding.cover.setImageResource(R.drawable.ic_cover_placeholder)
         }
     }
 
