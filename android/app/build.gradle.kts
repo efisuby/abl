@@ -32,7 +32,7 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.efisuby.abl.AblTestRunner"
 
         // Consumed by the Yandex ID SDK manifest.
         manifestPlaceholders["YANDEX_CLIENT_ID"] = yandexClientId

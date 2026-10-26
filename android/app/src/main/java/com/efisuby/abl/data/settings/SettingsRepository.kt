@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -23,6 +24,8 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             playbackSpeed = preferences[PLAYBACK_SPEED] ?: AppSettings.DEFAULT_SPEED,
             wifiOnly = preferences[WIFI_ONLY] ?: true,
             lastSyncAt = preferences[LAST_SYNC_AT],
+            language = preferences[LANGUAGE]?.let { name -> AppLanguage.entries.firstOrNull { it.name == name } } ?: AppLanguage.SYSTEM,
+            themeMode = preferences[THEME_MODE]?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } } ?: ThemeMode.SYSTEM,
         )
     }
 
@@ -62,6 +65,14 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         dataStore.edit { it[WIFI_ONLY] = enabled }
     }
 
+    suspend fun setThemeMode(mode: ThemeMode) {
+        dataStore.edit { it[THEME_MODE] = mode.name }
+    }
+
+    suspend fun setLanguage(language: AppLanguage) {
+        dataStore.edit { it[LANGUAGE] = language.name }
+    }
+
     suspend fun setLastSyncAt(timestamp: Long) {
         dataStore.edit { it[LAST_SYNC_AT] = timestamp }
     }
@@ -72,5 +83,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val LIBRARY_RESTORED = booleanPreferencesKey("library_restored")
         val WIFI_ONLY = booleanPreferencesKey("wifi_only")
         val LAST_SYNC_AT = longPreferencesKey("last_sync_at")
+        val THEME_MODE = stringPreferencesKey("theme_mode")
+        val LANGUAGE = stringPreferencesKey("language")
     }
 }

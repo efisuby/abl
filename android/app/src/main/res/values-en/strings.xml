@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AudioBook Player</string>
+
+    <string name="library_title">Library</string>
+    <string name="library_empty">Nothing here yet. Add a book from your device, Google Drive or Yandex Disk.</string>
+    <string name="library_import_folder">Folder from device or Google Drive</string>
+    <string name="library_import_file">File from device or Google Drive</string>
+    <string name="library_add">Add a book</string>
+    <string name="library_add_fab">Add</string>
+    <string name="library_add_cloud">From Yandex Disk</string>
+    <string name="mini_player_open">Open player</string>
+    <string name="library_search">Search by title, author, series</string>
+    <string name="library_nothing_found">Nothing found</string>
+    <string name="library_reset_filters">Reset filters</string>
+    <string name="filter_status_all">All statuses</string>
+    <string name="filter_availability_all">Everywhere</string>
+    <string name="availability_on_device">On device</string>
+    <string name="availability_in_cloud">In the cloud</string>
+    <string name="sort_title">By title</string>
+    <string name="sort_author">By author</string>
+    <string name="sort_added">Recently added</string>
+    <string name="sort_last_listened">Recently listened</string>
+    <string name="list_series_index">#%1$d</string>
+    <plurals name="series_books">
+        <item quantity="one">%d book</item>
+        <item quantity="other">%d books</item>
+    </plurals>
+
+    <string name="status_not_started">Not started</string>
+    <string name="status_in_progress">Listening</string>
+    <string name="status_finished">Finished</string>
+    <string name="status_with_percent">%1$s · %2$d%%</string>
+
+    <string name="continue_listening">Continue listening</string>
+    <string name="continue_play">Continue</string>
+    <string name="continue_position">%1$s of %2$s</string>
+
+    <string name="import_preparing">Preparing to import…</string>
+    <string name="import_copying">Copying the book</string>
+    <string name="import_file">File %1$d of %2$d: %3$s</string>
+    <string name="import_bytes">%1$s of %2$s</string>
+    <string name="import_failed">Could not import the book</string>
+    <string name="import_error_no_audio">The selected folder or file has no audio: mp3, m4a, m4b and aac are supported.</string>
+    <string name="import_error_io">Could not read the files or save them to the device. Check the free space and try again.</string>
+    <string name="import_error_unknown">An unexpected error occurred. Try picking the book again.</string>
+    <string name="import_cancel">Cancel</string>
+    <string name="import_close">Close</string>
+
+    <string name="book_narrator">Narrated by %1$s</string>
+    <string name="book_summary">%1$s · %2$s</string>
+    <plurals name="book_chapters">
+        <item quantity="one">%d chapter</item>
+        <item quantity="other">%d chapters</item>
+    </plurals>
+
+    <string name="book_listen">Listen</string>
+    <string name="book_back">Back</string>
+    <string name="book_series">%1$s · book %2$d</string>
+    <string name="book_progress">Chapter %1$d of %2$d · %3$d%%</string>
+    <string name="book_change_status">Change status</string>
+    <string name="book_bookmarks">Bookmarks</string>
+    <string name="book_chapters">Chapters</string>
+    <string name="book_current_chapter">Current chapter</string>
+    <string name="book_edit">Edit</string>
+    <string name="book_delete">Remove from device</string>
+    <string name="book_delete_title">Delete the book?</string>
+    <string name="book_delete_message">“%1$s” will be removed from this device together with its progress and bookmarks. Files on Yandex Disk are not touched.</string>
+    <string name="book_delete_confirm">Delete</string>
+    <string name="book_deleted">Book deleted</string>
+
+    <string name="edit_title">Edit</string>
+    <string name="edit_field_title">Title</string>
+    <string name="edit_field_author">Author</string>
+    <string name="edit_field_narrator">Narrator</string>
+    <string name="edit_field_series">Series</string>
+    <string name="edit_field_series_index">Number in series</string>
+    <string name="edit_cover">Change cover</string>
+    <string name="edit_save">Save</string>
+    <string name="edit_title_required">Enter a title</string>
+    <string name="edit_cover_failed">Could not open the image</string>
+    <string name="edit_save_failed">Could not save the changes</string>
+
+    <string name="player_open_book">About the book</string>
+    <string name="player_play">Play</string>
+    <string name="player_pause">Pause</string>
+    <string name="player_back_15">Back 15 seconds</string>
+    <string name="player_forward_15">Forward 15 seconds</string>
+    <string name="player_seek_seconds">15</string>
+    <string name="player_previous_chapter">Previous chapter</string>
+    <string name="player_next_chapter">Next chapter</string>
+    <string name="player_position">Position in the chapter</string>
+    <string name="player_chapter_of">Chapter %1$d of %2$d</string>
+    <string name="player_remaining">−%1$s</string>
+    <string name="player_speed">%1$s×</string>
+    <string name="player_speed_title">Playback speed</string>
+    <string name="player_speed_done">Done</string>
+
+    <string name="sleep_timer">Timer</string>
+    <string name="sleep_timer_title">Sleep timer</string>
+    <string name="sleep_timer_remaining">Sleep in %1$s</string>
+    <string name="sleep_timer_end_of_chapter">End of chapter</string>
+    <string name="sleep_timer_off">Turn off the timer</string>
+    <plurals name="sleep_timer_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+
+    <string name="bookmark_add">Add a bookmark</string>
+    <string name="bookmark_new_title">Bookmark at %1$s</string>
+    <string name="bookmark_note_hint">Note (optional)</string>
+    <string name="bookmark_save">Save</string>
+    <string name="bookmark_cancel">Cancel</string>
+    <string name="bookmark_added">Bookmark added</string>
+    <string name="bookmark_delete">Delete the bookmark</string>
+    <string name="bookmarks_title">Bookmarks</string>
+    <string name="bookmarks_open">Open bookmarks</string>
+    <string name="bookmarks_empty">No bookmarks yet</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_system">System default</string>
+    <string name="settings_language_ru">Русский</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_downloads">Downloads</string>
+    <string name="settings_wifi_only">Download over Wi-Fi only</string>
+    <string name="settings_wifi_only_summary">Books from the cloud will not download over a mobile network</string>
+    <string name="settings_storage">Storage</string>
+    <string name="settings_storage_used">Books take up %1$s</string>
+    <string name="settings_storage_hint">Only the audio of cloud books is removed: the books stay in the library and can be downloaded again. Books imported from the device are not affected.</string>
+    <string name="settings_remove_downloads">Delete all downloads</string>
+    <string name="settings_remove_downloads_title">Delete all downloads?</string>
+    <string name="settings_remove_downloads_message">The audio of cloud books will be removed from this device. Progress and bookmarks are kept.</string>
+    <string name="settings_remove_downloads_confirm">Delete</string>
+    <plurals name="settings_downloads_removed">
+        <item quantity="one">Downloads deleted for %d book</item>
+        <item quantity="other">Downloads deleted for %d books</item>
+    </plurals>
+    <string name="settings_sync">Sync</string>
+    <string name="settings_sync_now">Sync now</string>
+    <string name="settings_sync_running">Syncing…</string>
+    <string name="settings_sync_never">Not synced yet</string>
+    <string name="settings_sync_last">Last sync: %1$s</string>
+    <string name="settings_account">Yandex account</string>
+    <string name="settings_account_signed_out">Not signed in</string>
+    <string name="settings_account_signed_in">Signed in to Yandex</string>
+    <string name="settings_account_reauth">Sign in again</string>
+    <string name="settings_sign_out">Sign out</string>
+    <string name="settings_sign_out_title">Sign out?</string>
+    <string name="settings_sign_out_message">The token will be removed from this device. Local books, progress and bookmarks are kept.</string>
+
+    <string name="cloud_title">Cloud</string>
+    <string name="cloud_sign_in_prompt">Sign in to Yandex to listen to books from Yandex Disk</string>
+    <string name="cloud_reauth_prompt">Your session has expired. Sign in again — local books stay available.</string>
+    <string name="cloud_sign_in">Sign in with Yandex</string>
+    <string name="cloud_folder">Folder</string>
+    <string name="cloud_download_item">Download: %1$s</string>
+    <string name="cloud_download_folder">Download this folder</string>
+    <string name="cloud_added">Book added, download started</string>
+    <string name="cloud_already_added">The book is already in the library</string>
+    <string name="cloud_no_audio">There are no audio files here (mp3, m4a, m4b, aac)</string>
+    <string name="cloud_add_failed">Could not add the book. Check your connection.</string>
+
+    <string name="download_channel">Book downloads</string>
+    <string name="download_notification_title">Downloading a book</string>
+    <string name="download_cancel">Cancel</string>
+    <string name="download_state_in_cloud">In the cloud</string>
+    <string name="download_state_downloading">Downloading</string>
+    <string name="download_state_partial">Partially downloaded</string>
+    <string name="download_offer_title">Book is not downloaded</string>
+    <string name="download_offer_message">“%1$s” is stored in the cloud (%2$s). Download it to listen?</string>
+    <string name="download_offer_downloading">“%1$s” is still downloading. Wait for the download to finish.</string>
+    <string name="download_start">Download</string>
+    <string name="download_started">Download started</string>
+    <string name="download_no_space_title">Not enough space</string>
+    <string name="download_no_space_message">The download needs %1$s, %2$s is free. Free up some space and try again.</string>
+    <string name="download_unavailable">This book cannot be downloaded</string>
+    <string name="download_cancel_button">Cancel download</string>
+    <string name="download_remove_button">Delete download</string>
+    <string name="download_remove_message">The audio of “%1$s” will be removed from this device. Progress and bookmarks are kept; the book stays in the cloud.</string>
+    <string name="download_failed">Could not download “%1$s”: %2$s</string>
+    <string name="download_failed_http">disk server error (HTTP %1$d)</string>
+    <string name="download_failed_network">no connection to Disk</string>
+    <string name="download_failed_title">Download stopped</string>
+    <string name="download_failed_message">Disk does not return the file “%1$s”. You can retry the download or skip this file and download the rest.</string>
+    <string name="download_retry">Retry</string>
+    <string name="download_skip_file">Skip file</string>
+    <string name="upload_book">Upload to the cloud</string>
+    <string name="upload_started">Upload started</string>
+    <string name="upload_notification_title">Uploading a book</string>
+    <string name="upload_running">Uploading to the cloud: %1$d%%</string>
+    <string name="upload_failed_sign_in">Upload stopped: sign in to Yandex again</string>
+    <string name="upload_failed_quota">Upload stopped: Disk is out of space</string>
+    <string name="upload_failed_server">Upload stopped: Disk did not accept the file, try again later</string>
+    <string name="upload_failed_network">Upload stopped: no connection to Disk</string>
+    <string name="upload_failed_other">Upload stopped because of an error</string>
+    <string name="download_removed">Download deleted, the book stays in the cloud</string>
+    <string name="book_size_device">On device: %1$s</string>
+    <string name="book_size_cloud">Size: %1$s</string>
+    <string name="cloud_retry">Retry</string>
+    <string name="cloud_empty">No books here yet. Open Yandex Disk in a browser and upload folders with mp3 files or m4b files to “Apps/AudioBookPlayer/books”.</string>
+    <string name="cloud_error">Could not load the list. Check your connection.</string>
+    <string name="cloud_sign_in_cancelled">Sign-in cancelled</string>
+    <string name="cloud_sign_in_failed">Could not sign in. Check your connection and try again.</string>
+</resources>

@@ -6,7 +6,9 @@ import com.efisuby.abl.data.auth.AuthRepository
 import com.efisuby.abl.data.auth.AuthState
 import com.efisuby.abl.data.importer.BookStorage
 import com.efisuby.abl.data.repository.BookActions
+import com.efisuby.abl.data.settings.AppLanguage
 import com.efisuby.abl.data.settings.SettingsRepository
+import com.efisuby.abl.data.settings.ThemeMode
 import com.efisuby.abl.data.sync.SyncScheduler
 import com.efisuby.abl.domain.model.BookSource
 import com.efisuby.abl.domain.model.DownloadState
@@ -33,6 +35,7 @@ data class SettingsUiState(
     val removableBooks: Int,
     val auth: AuthState,
     val syncing: Boolean,
+    val themeMode: ThemeMode,
 )
 
 class SettingsViewModel(
@@ -63,6 +66,7 @@ class SettingsViewModel(
             },
             auth = authState,
             syncing = syncing,
+            themeMode = prefs.themeMode,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -73,6 +77,14 @@ class SettingsViewModel(
 
     fun setWifiOnly(enabled: Boolean) {
         viewModelScope.launch { settings.setWifiOnly(enabled) }
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch { settings.setThemeMode(mode) }
+    }
+
+    fun setLanguage(language: AppLanguage) {
+        viewModelScope.launch { settings.setLanguage(language) }
     }
 
     fun signOut() = auth.signOut()

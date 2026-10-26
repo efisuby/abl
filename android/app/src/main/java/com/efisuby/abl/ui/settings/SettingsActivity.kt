@@ -18,7 +18,10 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.efisuby.abl.R
 import com.efisuby.abl.appContainer
 import com.efisuby.abl.data.auth.AuthState
+import com.efisuby.abl.data.settings.AppLanguage
+import com.efisuby.abl.data.settings.ThemeMode
 import com.efisuby.abl.databinding.ActivitySettingsBinding
+import com.efisuby.abl.ui.common.Appearance
 import com.efisuby.abl.ui.common.applySystemBarInsets
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
@@ -51,6 +54,9 @@ class SettingsActivity : AppCompatActivity() {
             // render() sets the switch too; only a change by the user is written.
             if (checked != viewModel.state.value?.wifiOnly) viewModel.setWifiOnly(checked)
         }
+        binding.themeRow.setOnClickListener { chooseTheme() }
+        binding.languageRow.setOnClickListener { chooseLanguage() }
+        binding.languageValue.text = getString(Appearance.currentLanguage(this).label())
         binding.removeDownloads.setOnClickListener { confirmRemoveDownloads() }
         binding.syncNow.setOnClickListener { viewModel.syncNow() }
         binding.signOut.setOnClickListener { confirmSignOut() }
@@ -70,6 +76,7 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun render(state: SettingsUiState) {
         binding.wifiOnly.isChecked = state.wifiOnly
+        binding.themeValue.setText(state.themeMode.label())
         binding.storageUsed.text = getString(R.string.settings_storage_used, Formatter.formatShortFileSize(this, state.usedBytes))
         binding.account.setText(
             when (state.auth) {
@@ -88,6 +95,50 @@ class SettingsActivity : AppCompatActivity() {
                 DateUtils.formatDateTime(this, it, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME),
             )
         } ?: getString(R.string.settings_sync_never)
+    }
+
+    private fun chooseTheme() {
+        val modes = ThemeMode.entries
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.settings_theme)
+            .setSingleChoiceItems(
+                Array(modes.size) { getString(modes[it].label()) },
+                modes.indexOf(viewModel.state.value?.themeMode ?: ThemeMode.SYSTEM),
+            ) { dialog, which ->
+                viewModel.setThemeMode(modes[which])
+                dialog.dismiss()
+            }
+            .setNegativeButton(R.string.bookmark_cancel, null)
+            .show()
+    }
+
+    private fun chooseLanguage() {
+        val languages = AppLanguage.entries
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.settings_language)
+            .setSingleChoiceItems(
+                Array(languages.size) { getString(languages[it].label()) },
+                languages.indexOf(Appearance.currentLanguage(this)),
+            ) { dialog, which ->
+                dialog.dismiss()
+                // Recreates the open screens in the new language.
+                viewModel.setLanguage(languages[which])
+                Appearance.apply(this, languages[which])
+            }
+            .setNegativeButton(R.string.bookmark_cancel, null)
+            .show()
+    }
+
+    private fun ThemeMode.label() = when (this) {
+        ThemeMode.SYSTEM -> R.string.settings_theme_system
+        ThemeMode.LIGHT -> R.string.settings_theme_light
+        ThemeMode.DARK -> R.string.settings_theme_dark
+    }
+
+    private fun AppLanguage.label() = when (this) {
+        AppLanguage.SYSTEM -> R.string.settings_language_system
+        AppLanguage.RUSSIAN -> R.string.settings_language_ru
+        AppLanguage.ENGLISH -> R.string.settings_language_en
     }
 
     private fun confirmSignOut() {

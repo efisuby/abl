@@ -2,11 +2,22 @@ package com.efisuby.abl.data.settings
 
 import kotlin.math.roundToInt
 
-/** The app is dark-only and Russian-only (app-shell spec), so neither is a setting. */
+/** How the app picks light or dark; device-local, never synchronized. */
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
+/** The interface language; [SYSTEM] follows the device (Russian unless it is English). */
+enum class AppLanguage(val tag: String?) {
+    SYSTEM(null),
+    RUSSIAN("ru"),
+    ENGLISH("en"),
+}
+
 data class AppSettings(
     val playbackSpeed: Float = DEFAULT_SPEED,
     val wifiOnly: Boolean = true,
     val lastSyncAt: Long? = null,
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val language: AppLanguage = AppLanguage.SYSTEM,
 ) {
     companion object {
         const val MIN_SPEED = 0.5f

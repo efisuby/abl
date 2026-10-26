@@ -3,7 +3,6 @@ package com.efisuby.abl.ui.importer
 import android.content.Context
 import android.net.Uri
 import android.view.View
-import android.widget.TextView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
@@ -98,28 +97,27 @@ class ImportScreenTest {
     fun anUnknownSizeShowsAnIndeterminateBar() {
         mode.sizeUnknown = true
         container.importSources = GatedSources(fixtures, gate)
-
-        ActivityScenario.launch<ImportActivity>(importIntent("tagged")).use { scenario ->
-            // Espresso waits for the main thread to go idle, which an indeterminate bar never lets it
-            // do, so the views are read directly.
-            val expected = context.getString(R.string.import_file, 1, 3, "01.mp3")
-            val deadline = System.currentTimeMillis() + 10_000
-            var shown = false
-            while (!shown && System.currentTimeMillis() < deadline) {
-                scenario.onActivity { shown = it.findViewById<TextView>(R.id.file).text.toString() == expected }
-                if (!shown) Thread.sleep(100)
+        // An indeterminate bar animates forever and Espresso would wait for it to go idle.
+        val scaleBefore = shell("settings get global animator_duration_scale").trim()
+        shell("settings put global animator_duration_scale 0")
+        try {
+            ActivityScenario.launch<ImportActivity>(importIntent("tagged")).use {
+                waitFor(allOf(withId(R.id.file), withText(context.getString(R.string.import_file, 1, 3, "01.mp3"))))
+                onView(withId(R.id.progress)).check { view, _ ->
+                    assertTrue("the bar must be indeterminate", (view as BaseProgressIndicator<*>).isIndeterminate)
+                }
+                gate.countDown()
+                waitFor(withText("The Bull's Hour"))
             }
-            assertTrue("the first file is not shown", shown)
-            scenario.onActivity {
-                assertTrue(
-                    "the bar must be indeterminate",
-                    it.findViewById<BaseProgressIndicator<*>>(R.id.progress).isIndeterminate,
-                )
-            }
-            gate.countDown()
-            waitFor(withText("The Bull's Hour"))
+        } finally {
+            shell("settings put global animator_duration_scale ${scaleBefore.takeIf { it != "null" } ?: "1.0"}")
         }
     }
+
+    private fun shell(command: String): String =
+        InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command).use { pfd ->
+            java.io.FileInputStream(pfd.fileDescriptor).bufferedReader().readText()
+        }
 
     @Test
     fun aDroppedConnectionShowsTheErrorAndLeavesNothing() {
