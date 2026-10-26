@@ -85,6 +85,7 @@
     <string name="edit_cover_failed">Не удалось открыть изображение</string>
     <string name="edit_save_failed">Не удалось сохранить изменения</string>
 
+    <string name="player_open_book">О книге</string>
     <string name="player_play">Воспроизвести</string>
     <string name="player_pause">Пауза</string>
     <string name="player_back_15">Назад на 15 секунд</string>

@@ -102,6 +102,13 @@
         <item name="cornerRadius">0dp</item>
     </style>
 
+    <!-- Destructive actions (remove downloads, sign out): outlined in the error colour. -->
+    <style name="Widget.Abl.Button.Danger" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textColor">?attr/colorError</item>
+        <item name="strokeColor">?attr/colorError</item>
+        <item name="rippleColor">?attr/colorError</item>
+    </style>
+
     <style name="SettingsSection">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>

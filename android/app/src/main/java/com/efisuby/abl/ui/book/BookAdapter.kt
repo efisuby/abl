@@ -25,6 +25,7 @@ import com.efisuby.abl.domain.model.Chapter
 import com.efisuby.abl.ui.common.formatDuration
 import com.efisuby.abl.ui.common.labelRes
 import com.efisuby.abl.ui.common.loadCover
+import com.efisuby.abl.ui.common.setCover
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -144,9 +145,9 @@ class BookAdapter(
             if (book.coverPath != coverPath || coverJob == null) {
                 coverPath = book.coverPath
                 coverJob?.cancel()
-                binding.cover.setImageDrawable(null)
+                binding.cover.setImageResource(R.drawable.ic_cover_placeholder)
                 val size = context.resources.getDimensionPixelSize(R.dimen.book_cover_size)
-                coverJob = scope.launch { binding.cover.setImageBitmap(loadCover(book.coverPath, size)) }
+                coverJob = scope.launch { binding.cover.setCover(loadCover(book.coverPath, size)) }
             }
         }
 
@@ -187,6 +188,7 @@ class BookAdapter(
             binding.number.text = String.format(Locale.getDefault(), "%d", row.number)
             binding.title.text = row.chapter.title
             binding.title.setTypeface(null, if (row.current) Typeface.BOLD else Typeface.NORMAL)
+            binding.root.isActivated = row.current
             ViewCompat.setStateDescription(
                 binding.root,
                 if (row.current) binding.root.context.getString(R.string.book_current_chapter) else null,

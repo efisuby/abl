@@ -40,6 +40,7 @@ class MiniPlayer(
     }
 
     init {
+        binding.miniCover.setImageResource(R.drawable.ic_cover_placeholder)
         binding.miniPlayer.setOnClickListener { openPlayer() }
         binding.miniPlayPause.setOnClickListener {
             val player = controller ?: return@setOnClickListener

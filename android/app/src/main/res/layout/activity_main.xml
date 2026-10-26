@@ -280,7 +280,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:importantForAccessibility="no"
-                android:max="1000" />
+                android:max="1000"
+                app:trackCornerRadius="0dp"
+                app:trackThickness="3dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

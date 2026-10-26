@@ -31,7 +31,9 @@ import com.efisuby.abl.playback.PlaybackService
 import com.efisuby.abl.playback.SleepTimer
 import com.efisuby.abl.ui.common.applySystemBarInsets
 import com.efisuby.abl.ui.common.formatDuration
+import com.efisuby.abl.ui.book.BookActivity
 import com.efisuby.abl.ui.common.loadCover
+import com.efisuby.abl.ui.common.setCover
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.slider.Slider
 import com.google.common.util.concurrent.ListenableFuture
@@ -82,6 +84,13 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
 
+        binding.cover.setImageResource(R.drawable.ic_cover_placeholder) // until the book brings its own
+        binding.playerToolbar.setNavigationOnClickListener { finish() }
+        binding.playerToolbar.setOnMenuItemClickListener {
+            if (it.itemId == R.id.openBook) openBook() else return@setOnMenuItemClickListener false
+            true
+        }
+        binding.bookTitle.setOnClickListener { openBook() }
         binding.playPause.setOnClickListener { controller?.let(::togglePlayPause) }
         binding.back15.setOnClickListener { controller?.seekBack() }
         binding.forward15.setOnClickListener { controller?.seekForward() }
@@ -188,6 +197,11 @@ class PlayerActivity : AppCompatActivity() {
         player.play()
     }
 
+    private fun openBook() {
+        val bookId = controller?.currentMediaItem?.mediaId?.let(PlaybackIds::parseChapter)?.first ?: return
+        startActivity(BookActivity.intent(this, bookId))
+    }
+
     private fun togglePlayPause(player: Player) {
         if (player.isPlaying) {
             player.pause()
@@ -218,7 +232,7 @@ class PlayerActivity : AppCompatActivity() {
         if (artwork != coverUri) {
             coverUri = artwork
             val size = resources.displayMetrics.widthPixels
-            lifecycleScope.launch { binding.cover.setImageBitmap(loadCover(metadata.artworkUri?.path, size)) }
+            lifecycleScope.launch { binding.cover.setCover(loadCover(metadata.artworkUri?.path, size)) }
         }
         renderPosition()
     }

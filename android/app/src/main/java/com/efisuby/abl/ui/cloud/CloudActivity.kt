@@ -3,7 +3,6 @@ package com.efisuby.abl.ui.cloud
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
@@ -23,6 +22,7 @@ import com.efisuby.abl.data.disk.DiskApi
 import com.efisuby.abl.databinding.ActivityCloudBinding
 import com.efisuby.abl.ui.common.applySystemBarInsets
 import com.efisuby.abl.ui.common.showNoSpace
+import com.google.android.material.snackbar.Snackbar
 import com.yandex.authsdk.YandexAuthLoginOptions
 import com.yandex.authsdk.YandexAuthOptions
 import com.yandex.authsdk.YandexAuthResult
@@ -145,7 +145,7 @@ class CloudActivity : AppCompatActivity() {
         }
     }
 
-    private fun toast(res: Int) = Toast.makeText(this, res, Toast.LENGTH_SHORT).show()
+    private fun toast(res: Int) = Snackbar.make(binding.root, res, Snackbar.LENGTH_SHORT).show()
 
     companion object {
         fun intent(context: Context): Intent = Intent(context, CloudActivity::class.java)

@@ -25,6 +25,7 @@ class CloudAdapter(
         val item = getItem(position)
         val context = holder.itemView.context
         holder.binding.name.text = item.name
+        holder.binding.icon.setImageResource(if (item.isFolder) R.drawable.ic_folder else R.drawable.ic_audio_file)
         holder.binding.detail.text = if (item.isFolder) {
             context.getString(R.string.cloud_folder)
         } else {
